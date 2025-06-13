@@ -57,4 +57,17 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Эллиптическо-усеченная емкость горизонтальная с плоскими днищами" />
+
+    <Button
+        android:id="@+id/button_rounded_rect_tank"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Прямоугольно-округлая емкость горизонтальная с плоскими днищами" />
+
+    <Button
+        android:id="@+id/button_suitcase_tank"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Чемоданная емкость горизонтальная с плоскими днищами" />
+
 </LinearLayout>

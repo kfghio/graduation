@@ -1,45 +1,52 @@
 package com.example.graduation.utils
 
 import com.example.graduation.models.TableRow
-import kotlin.math.acos
-import kotlin.math.asin
-import kotlin.math.pow
-import kotlin.math.sin
-import kotlin.math.sqrt
+import kotlin.math.*
 
 object TankCalculator {
-    fun generateRectangularTable(lengthMm: Double, widthMm: Double, heightMm: Double, stepMm: Double, density: Double): List<TableRow> {
+
+    /* ────────────────────────── Прямоугольная ───────────────────────── */
+    fun generateRectangularTable(
+        lengthMm: Double,
+        widthMm: Double,
+        heightMm: Double,
+        stepMm: Double,
+        density: Double
+    ): List<TableRow> {
+        val fullVolM3 = (lengthMm * widthMm * heightMm) / 1e9   // м³
         val rows = mutableListOf<TableRow>()
         var h = 0.0
-        while (h <= heightMm) {
-            val levelCm = h / 10.0
-            val percentage = (h / heightMm) * 100.0
-            val volumeM3 = (lengthMm / 1000.0) * (widthMm / 1000.0) * (h / 1000.0)
-            val massT = volumeM3 * density
-            rows.add(TableRow(levelCm, percentage, volumeM3, massT))
+        while (h <= heightMm + 1e-6) {
+            val levelCm   = h / 10.0
+            val volumeM3  = (lengthMm * widthMm * h) / 1e9
+            val percentage= volumeM3 / fullVolM3 * 100.0
+            val massT     = volumeM3 * density
+            rows += TableRow(levelCm, percentage, volumeM3, massT)
             h += stepMm
         }
         return rows
     }
 
-    fun generateCylindricalTable(lengthMm: Double, diameterMm: Double, stepMm: Double, density: Double): List<TableRow> {
+    /* ────────────────────────── Цилиндрическая ──────────────────────── */
+    fun generateCylindricalTable(
+        lengthMm: Double,
+        diameterMm: Double,
+        stepMm: Double,
+        density: Double
+    ): List<TableRow> {
+        val r = diameterMm / 2000.0
+        val lengthM = lengthMm / 1000.0
+        val fullVolM3 = Math.PI * r * r * lengthM
         val rows = mutableListOf<TableRow>()
-        val radiusMm = diameterMm / 2.0
-        val maxHeightMm = diameterMm
 
         var h = 0.0
-        while (h <= maxHeightMm + 1e-6) {
+        while (h <= diameterMm + 1e-6) {
             val levelCm = h / 10.0
-            val percentage = (h / maxHeightMm) * 100.0
-
-            val r = radiusMm / 1000.0
-            val l = lengthMm / 1000.0
             val hMeters = h / 1000.0
-
-            val volumeM3 = calculateHorizontalCylinderVolume(r, l, hMeters)
+            val volumeM3 = calculateHorizontalCylinderVolume(r, lengthM, hMeters)
+            val percentage = volumeM3 / fullVolM3 * 100.0
             val massT = volumeM3 * density
-
-            rows.add(TableRow(levelCm, percentage, volumeM3, massT))
+            rows += TableRow(levelCm, percentage, volumeM3, massT)
             h += stepMm
         }
         return rows
@@ -48,12 +55,12 @@ object TankCalculator {
     private fun calculateHorizontalCylinderVolume(r: Double, l: Double, h: Double): Double {
         if (h <= 0) return 0.0
         if (h >= 2 * r) return Math.PI * r * r * l
-
         val theta = 2 * acos((r - h) / r)
-        val area = (r * r / 2) * (theta - sin(theta))
+        val area  = (r * r / 2) * (theta - sin(theta))
         return area * l
     }
 
+    /* ────────────────── Цилиндр с эллиптическими днищами ─────────────── */
     fun generateEllipticalEndedCylindricalTable(
         lengthMm: Double,
         diameterMm: Double,
@@ -61,29 +68,25 @@ object TankCalculator {
         stepMm: Double,
         density: Double
     ): List<TableRow> {
-        val radiusMm = diameterMm / 2.0
-        val maxHeightMm = diameterMm
-        val cylinderLengthMm = lengthMm
-        val headVolumeM3 = calculateEllipticalHeadVolume(diameterMm, headHeightMm)
-        val l = cylinderLengthMm / 1000.0
-        val r = radiusMm / 1000.0
+        val r = diameterMm / 2000.0
+        val lengthM = lengthMm / 1000.0
+        val cylinderFull = Math.PI * r * r * lengthM
+        val headVol = calculateEllipticalHeadVolume(diameterMm, headHeightMm)
+        val fullVolM3 = cylinderFull + 2 * headVol
 
         val rows = mutableListOf<TableRow>()
         var h = 0.0
-        while (h <= maxHeightMm) {
+        while (h <= diameterMm + 1e-6) {
             val levelCm = h / 10.0
-            val percentage = (h / maxHeightMm) * 100.0
-
             val hMeters = h / 1000.0
-            val cylVolumeM3 = calculateHorizontalCylinderVolume(r, l, hMeters)
-            val totalVolumeM3 = cylVolumeM3 + 2 * headVolumeM3 * (h / maxHeightMm)
-
-            val massT = totalVolumeM3 * density
-
-            rows.add(TableRow(levelCm, percentage, totalVolumeM3, massT))
+            val cylVol  = calculateHorizontalCylinderVolume(r, lengthM, hMeters)
+            val headsPart = 2 * headVol * (h / diameterMm)
+            val volumeM3 = cylVol + headsPart
+            val percentage = volumeM3 / fullVolM3 * 100.0
+            val massT = volumeM3 * density
+            rows += TableRow(levelCm, percentage, volumeM3, massT)
             h += stepMm
         }
-
         return rows
     }
 
@@ -93,37 +96,36 @@ object TankCalculator {
         return (Math.PI * h * (3 * a * a + h * h)) / 6.0
     }
 
+    /* ──────────────── Цилиндр с полусферическими днищами ─────────────── */
     fun generateHemisphericalEndedCylindricalTable(
         lengthMm: Double,
         diameterMm: Double,
         stepMm: Double,
         density: Double
     ): List<TableRow> {
-        val radiusM = diameterMm / 2.0 / 1000.0
-        val totalHeightMm = diameterMm
-        val cylinderLengthM = lengthMm / 1000.0
-        val hemisphereVolumeM3 = (2.0 / 3.0) * Math.PI * Math.pow(radiusM, 3.0)
+        val r = diameterMm / 2000.0
+        val lengthM = lengthMm / 1000.0
+        val cylinderFull = Math.PI * r * r * lengthM
+        val hemisphereVol = 2.0 / 3.0 * Math.PI * r.pow(3)
+        val fullVolM3 = cylinderFull + 2 * hemisphereVol
 
         val rows = mutableListOf<TableRow>()
         var h = 0.0
-        while (h <= totalHeightMm) {
+        while (h <= diameterMm + 1e-6) {
             val levelCm = h / 10.0
-            val percentage = (h / totalHeightMm) * 100.0
-            val hMeters = h / 1000.0
-
-            val cylVolumeM3 = calculateHorizontalCylinderVolume(radiusM, cylinderLengthM, hMeters)
-            val hemispheresContribution = 2 * hemisphereVolumeM3 * (h / totalHeightMm)
-
-            val totalVolumeM3 = cylVolumeM3 + hemispheresContribution
-            val massT = totalVolumeM3 * density
-
-            rows.add(TableRow(levelCm, percentage, totalVolumeM3, massT))
+            val hM = h / 1000.0
+            val cylVol = calculateHorizontalCylinderVolume(r, lengthM, hM)
+            val hemisPart = 2 * hemisphereVol * (h / diameterMm)
+            val volumeM3 = cylVol + hemisPart
+            val percentage = volumeM3 / fullVolM3 * 100.0
+            val massT = volumeM3 * density
+            rows += TableRow(levelCm, percentage, volumeM3, massT)
             h += stepMm
         }
-
         return rows
     }
 
+    /* ──────────────── Цилиндр с дуглыми (arc) днищами ────────────────── */
     fun generateArcEndedCylindricalTable(
         lengthMm: Double,
         diameterMm: Double,
@@ -131,29 +133,25 @@ object TankCalculator {
         stepMm: Double,
         density: Double
     ): List<TableRow> {
-        val radiusM = diameterMm / 2.0 / 1000.0
-        val totalHeightMm = diameterMm
-        val endHeightM = endHeightMm / 1000.0
-        val arcEndVolumeM3 = calculateArcEndVolume(diameterMm, endHeightMm)
-        val cylinderLengthM = lengthMm / 1000.0
+        val r = diameterMm / 2000.0
+        val lengthM = lengthMm / 1000.0
+        val cylinderFull = Math.PI * r * r * lengthM
+        val arcEndVol = calculateArcEndVolume(diameterMm, endHeightMm)
+        val fullVolM3 = cylinderFull + 2 * arcEndVol
 
         val rows = mutableListOf<TableRow>()
         var h = 0.0
-        while (h <= totalHeightMm) {
+        while (h <= diameterMm + 1e-6) {
             val levelCm = h / 10.0
-            val percentage = (h / totalHeightMm) * 100.0
-            val hMeters = h / 1000.0
-
-            val cylVolumeM3 = calculateHorizontalCylinderVolume(radiusM, cylinderLengthM, hMeters)
-            val arcEndsContribution = 2 * arcEndVolumeM3 * (h / totalHeightMm)
-
-            val totalVolumeM3 = cylVolumeM3 + arcEndsContribution
-            val massT = totalVolumeM3 * density
-
-            rows.add(TableRow(levelCm, percentage, totalVolumeM3, massT))
+            val hM = h / 1000.0
+            val cylVol = calculateHorizontalCylinderVolume(r, lengthM, hM)
+            val arcPart = 2 * arcEndVol * (h / diameterMm)
+            val volumeM3 = cylVol + arcPart
+            val percentage = volumeM3 / fullVolM3 * 100.0
+            val massT = volumeM3 * density
+            rows += TableRow(levelCm, percentage, volumeM3, massT)
             h += stepMm
         }
-
         return rows
     }
 
@@ -161,12 +159,12 @@ object TankCalculator {
         val R = diameterMm / 2.0 / 1000.0
         val h = heightMm / 1000.0
         if (h <= 0 || h >= 2 * R) return 0.0
-
         val theta = 2 * acos((R - h) / R)
         val segmentArea = (R * R / 2) * (theta - sin(theta))
-        return segmentArea * diameterMm / 1000.0
+        return segmentArea * (diameterMm / 1000.0)
     }
 
+    /* ──────────────── Цилиндр с коническими днищами ──────────────────── */
     fun generateConicalEndedCylindricalTable(
         lengthMm: Double,
         diameterMm: Double,
@@ -174,33 +172,30 @@ object TankCalculator {
         stepMm: Double,
         density: Double
     ): List<TableRow> {
-        val radiusM = diameterMm / 2.0 / 1000.0
-        val endHeightM = endHeightMm / 1000.0
-        val cylinderLengthM = lengthMm / 1000.0
-        val totalHeightMm = diameterMm
-
-        val conicalEndVolumeM3 = (1.0 / 3.0) * Math.PI * radiusM * radiusM * endHeightM
+        val r = diameterMm / 2000.0
+        val lengthM = lengthMm / 1000.0
+        val cylinderFull = Math.PI * r * r * lengthM
+        val endH = endHeightMm / 1000.0
+        val coneVol = (1.0 / 3.0) * Math.PI * r * r * endH
+        val fullVolM3 = cylinderFull + 2 * coneVol
 
         val rows = mutableListOf<TableRow>()
         var h = 0.0
-        while (h <= totalHeightMm) {
+        while (h <= diameterMm + 1e-6) {
             val levelCm = h / 10.0
-            val percentage = (h / totalHeightMm) * 100.0
-            val hMeters = h / 1000.0
-
-            val cylVolumeM3 = calculateHorizontalCylinderVolume(radiusM, cylinderLengthM, hMeters)
-            val coneContribution = 2 * conicalEndVolumeM3 * (h / totalHeightMm)
-
-            val totalVolumeM3 = cylVolumeM3 + coneContribution
-            val massT = totalVolumeM3 * density
-
-            rows.add(TableRow(levelCm, percentage, totalVolumeM3, massT))
+            val hM = h / 1000.0
+            val cylVol = calculateHorizontalCylinderVolume(r, lengthM, hM)
+            val conePart = 2 * coneVol * (h / diameterMm)
+            val volumeM3 = cylVol + conePart
+            val percentage = volumeM3 / fullVolM3 * 100.0
+            val massT = volumeM3 * density
+            rows += TableRow(levelCm, percentage, volumeM3, massT)
             h += stepMm
         }
-
         return rows
     }
 
+    /* ──────────────── Цилиндр с усечённо-коническими днищами ─────────── */
     fun generateFrustumEndedCylindricalTable(
         lengthMm: Double,
         bigDiamMm: Double,
@@ -213,25 +208,24 @@ object TankCalculator {
         val r1 = bigDiamMm   / 2000.0
         val r2 = smallDiamMm / 2000.0
         val hCone = endHeightMm / 1000.0
-        val lCyl  = lengthMm   / 1000.0
-        val hMaxMm = bigDiamMm
+        val cylLenM = lengthMm / 1000.0
+
+        val vCylFull  = Math.PI * r1 * r1 * cylLenM
+        val vConeFull = Math.PI * hCone / 3.0 * (r1 * r1 + r1 * r2 + r2 * r2)
+        val vFull     = vCylFull + 2 * vConeFull
 
         val rows = mutableListOf<TableRow>()
-        var h = 0.0
-        while (h <= hMaxMm + 1e-6) {
-            val fillH = h / 1000.0
-            val levelCm    = h / 10.0
-            val percentage = h / hMaxMm * 100.0
+        var hMm = 0.0
+        while (hMm <= bigDiamMm + 1e-6) {
+            val hM = hMm / 1000.0
+            val cylVol   = calculateHorizontalCylinderVolume(r1, cylLenM, hM)
+            val coneVol  = 2 * partialFrustumVolume(r1, r2, hCone, hM)
+            val volumeM3 = cylVol + coneVol
+            val pct      = volumeM3 / vFull * 100.0
+            val massT    = volumeM3 * density
 
-            val cylVol = calculateHorizontalCylinderVolume(r1, lCyl, fillH)
-
-            val frustumVol = 2 * partialFrustumVolume(r1, r2, hCone, fillH)
-
-            val totalVol = cylVol + frustumVol
-            val massT = totalVol * density
-
-            rows.add(TableRow(levelCm, percentage, totalVol, massT))
-            h += stepMm
+            rows += TableRow(hMm / 10.0, pct, volumeM3, massT)
+            hMm += stepMm
         }
         return rows
     }
@@ -243,33 +237,42 @@ object TankCalculator {
         fillH: Double,
         slices: Int = 1000
     ): Double {
-        if (fillH <= 0) return 0.0
-        if (fillH >= 2 * r1) {
-            return (Math.PI * hCone / 3.0) * (r1 * r1 + r1 * r2 + r2 * r2)
+
+        if (fillH >= 2 * r1 - 1e-9) {
+            return Math.PI * hCone / 3.0 * (r1 * r1 + r1 * r2 + r2 * r2)
         }
+        if (fillH <= 0) return 0.0
 
         val dx = hCone / slices
-        var vol = 0.0
+        var v = 0.0
         for (i in 0 until slices) {
             val x = (i + 0.5) * dx
-            val r = r1 - (r1 - r2) * (x / hCone)
-            val area = circularSegmentArea(r, fillH.coerceAtMost(2 * r))
-            vol += area * dx
+            val rSlice = r1 - (r1 - r2) * (x / hCone)
+
+            val localFill = fillH - (r1 - rSlice)
+            if (localFill <= 0) continue
+
+            val area = if (localFill >= 2 * rSlice)
+                Math.PI * rSlice * rSlice
+            else
+                circularSegmentArea(rSlice, localFill)
+
+            v += area * dx
         }
-        return vol
+        return v
     }
 
-    private fun circularSegmentArea(r: Double, h: Double): Double {
-        return when {
-            h <= 0 -> 0.0
-            h >= 2 * r -> Math.PI * r * r
-            else -> {
-                val theta = 2 * acos((r - h) / r)
-                0.5 * r * r * (theta - sin(theta))
-            }
+    private fun circularSegmentArea(r: Double, h: Double): Double = when {
+        h <= 0      -> 0.0
+        h >= 2 * r  -> Math.PI * r * r
+        else        -> {
+            val theta = 2 * acos((r - h) / r)
+            0.5 * r * r * (theta - sin(theta))
         }
     }
 
+
+    /* ─────────────────── Горизонтальный чистый эллипс ───────────────── */
     fun generateEllipticalHorizontalTable(
         lengthMm: Double,
         heightMm: Double,
@@ -277,42 +280,28 @@ object TankCalculator {
         stepMm: Double,
         density: Double
     ): List<TableRow> {
-        val a = (heightMm / 2.0) / 1000.0
-        val b = (axisMm / 2.0) / 1000.0
-        val length = lengthMm / 1000.0
-        val step = stepMm / 1000.0
-        val maxHeight = heightMm / 1000.0
+        val a = heightMm / 2000.0
+        val b = axisMm   / 2000.0
+        val lengthM = lengthMm / 1000.0
+        val fullVolM3 = Math.PI * a * b * lengthM
 
         val rows = mutableListOf<TableRow>()
-        var h = 0.0
-        while (h <= maxHeight + 1e-6) {
-            val levelCm = h * 100.0
-            val percentage = (h / maxHeight) * 100.0
-            val areaM2 = calculateEllipticalSegmentArea(h, a, b)
-            val volumeM3 = areaM2 * length
+        val maxHeight = heightMm / 1000.0
+        val stepM = stepMm / 1000.0
+        var hM = 0.0
+        while (hM <= maxHeight + 1e-9) {
+            val y = -a + hM
+            val area = segmentEllipticalArea(y, b, a)
+            val volumeM3 = area * lengthM
+            val percentage = volumeM3 / fullVolM3 * 100.0
             val massT = volumeM3 * density
-            rows.add(TableRow(levelCm, percentage, volumeM3, massT))
-            h += step
+            rows += TableRow(hM * 100.0, percentage, volumeM3, massT)
+            hM += stepM
         }
         return rows
     }
 
-    private fun calculateEllipticalSegmentArea(h: Double, a: Double, b: Double, n: Int = 100): Double {
-        if (h <= 0) return 0.0
-        if (h >= 2 * a) return Math.PI * a * b
-
-        val dy = h / n
-        var sum = 0.0
-        for (i in 0..n) {
-            val y = i * dy
-            val term = 1 - ((y - a) / a).pow(2)
-            if (term < 0) continue
-            val width = 2 * b * sqrt(term)
-            sum += if (i == 0 || i == n) width / 2.0 else width
-        }
-        return sum * dy
-    }
-
+    /* ──────── Эллипс с симметричным двойным срезом ─────── */
     fun generateEllipticalDoubleTruncatedTable(
         lengthMm: Double,
         heightMm: Double,
@@ -322,33 +311,37 @@ object TankCalculator {
         density: Double
     ): List<TableRow> {
 
-        val a = axisMm   / 2.0 / 1000.0
-        val b = heightMm / 2.0 / 1000.0
+        val a_mm = axisMm / 2.0
+        val H_mm = heightMm
+        val y0_mm = H_mm / 2.0
+
+        require(widthMm <= axisMm) { "widthMm must be ≤ axisMm" }
+
+        val denom = 1.0 - (widthMm * widthMm) / (4.0 * a_mm * a_mm)
+        require(denom > 0) { "Недопустимое сочетание A, B и H: хорда не может лежать выше вершины эллипса." }
+        val b_mm = y0_mm / sqrt(denom)
+
+        val a = a_mm / 1000.0
+        val b = b_mm / 1000.0
+        val y0 = y0_mm / 1000.0
         val lengthM = lengthMm / 1000.0
+        val workH = H_mm / 1000.0
 
-        val k = widthMm / axisMm
-        require(k in 0.0..1.0) { "widthMm must be ≤ axisMm" }
-
-        val y0 = b * sqrt(1 - k * k)
-        val yBottom = -y0
-        val yTop    =  y0
-        val workH   = yTop - yBottom
-
-        val areaBottom = segmentEllipticalArea(yBottom, a, b)
-        val areaTop = segmentEllipticalArea(yTop, a, b)
-        val areaStrip = areaTop - areaBottom
-        val volFull = areaStrip * lengthM
+        val areaBottom = segmentEllipticalArea(-y0, a, b)
+        val areaTop    = segmentEllipticalArea( y0, a, b)
+        val areaStrip  = areaTop - areaBottom
+        val fullVolM3  = areaStrip * lengthM
 
         val rows = mutableListOf<TableRow>()
         val stepM = stepMm / 1000.0
         var hM = 0.0
         while (hM <= workH + 1e-9) {
-            val y = yBottom + hM
+            val y = -y0 + hM
             val area = segmentEllipticalArea(y, a, b) - areaBottom
             val vol  = area * lengthM
             rows += TableRow(
                 levelCm   = hM * 100.0,
-                percentage= vol / volFull * 100.0,
+                percentage= vol / fullVolM3 * 100.0,
                 volumeM3  = vol,
                 massT     = vol * density
             )
@@ -362,6 +355,133 @@ object TankCalculator {
         return a * b * (asin(t) + Math.PI / 2 + t * sqrt(1 - t * t))
     }
 
-    // Здесь можно добавить функции для других типов цистерн
+    /* ──────── Горизонтальная прямоугольно-округлая ёмкость (плоские днища) ─────── */
+    fun generateRoundedRectTable(
+        lengthMm: Double,
+        height1Mm: Double,
+        height2Mm: Double,
+        widthMm: Double,
+        stepMm: Double,
+        density: Double
+    ): List<TableRow> {
 
+        val r = (height1Mm - height2Mm) / 2
+
+        val R = r / 1000.0
+        val H1 = height1Mm / 1000.0
+        val H2 = height2Mm / 1000.0
+        val B = widthMm / 1000.0
+        val L = lengthMm / 1000.0
+        val stepM = stepMm / 1000.0
+        val centerW  = B - 2 * R
+
+
+        val fullArea = crossSectionArea(H1, R, centerW, H2, B)
+        val fullVol  = fullArea * L
+
+        val rows = mutableListOf<TableRow>()
+        var h = 0.0
+        while (h <= H1 + 1e-9) {
+            val area  = crossSectionArea(h, R, centerW, H2, B)
+            val vol   = area * L
+            val mass  = vol * density
+
+            val levelCm    = h * 100.0
+            val percentage = vol / fullVol * 100.0
+            val volumeM3   = vol
+            val massT      = mass
+
+            rows.add(TableRow(levelCm, percentage, volumeM3, massT))
+            h += stepM
+        }
+        return rows
+    }
+
+    private fun circularRecSegmentArea(h: Double, rR: Double): Double = when {
+        h <= 0.0 -> 0.0
+        h >= 2 * rR -> Math.PI * rR * rR
+        else -> rR * rR * acos((rR - h) / rR) - (rR - h) * sqrt(2 * rR * h - h * h)
+    }
+
+    private fun crossSectionArea(
+        h: Double, r: Double, centerW: Double, hH2: Double, bB: Double
+    ): Double {
+        val h1 = min(h, r)
+        var area = centerW * h1 + 2 * circularRecSegmentArea(h1, r)
+
+        if (h <= r) return area
+
+        val h2 = min(h - r, hH2)
+        area += bB * h2
+        if (h <= r + hH2) return area
+
+        val h3 = h - (r + hH2)
+        area += 2 * circularRecSegmentArea(h3, r)
+
+        return area
+    }
+
+    /* ──────── Чемоданная емкость горизонтальная с плоскими днищами ─────── */
+    fun generateSuitcaseTable(
+        lengthMm: Double,
+        height1Mm: Double,
+        height2Mm: Double,
+        widthMm: Double,
+        stepMm: Double,
+        density: Double
+    ): List<TableRow> {
+
+        val a = widthMm / 2.0 / 1000.0
+        val b = (height1Mm - height2Mm) / 2.0 / 1000.0
+        val H1 = height1Mm / 1000.0
+        val H2 = height2Mm / 1000.0
+        val widthM = widthMm  / 1000.0
+        val lengthM = lengthMm / 1000.0
+
+        val halfEllipseArea = Math.PI * a * b / 2.0
+
+        val fullCrossArea = halfEllipseArea * 2 + widthM * H2
+        val fullVolume    = fullCrossArea * lengthM
+
+        val rows  = mutableListOf<TableRow>()
+        val stepM = stepMm / 1000.0
+        var h     = 0.0
+
+        while (h <= H1 + 1e-9) {
+
+            val areaM2: Double = when {
+                h <= b -> {
+                    halfEllipseSuitcaseSegmentArea(h, b, a)
+                }
+
+                h <= b + H2 -> {
+                    halfEllipseArea + widthM * (h - b)
+                }
+
+                else -> {
+                    val ht = h - (b + H2)
+                    val topSegment = halfEllipseArea - halfEllipseSuitcaseSegmentArea(b - ht, b, a)
+                    halfEllipseArea + widthM * H2 + topSegment
+                }
+            }
+
+            val volume  = areaM2 * lengthM
+            val mass = volume * density
+
+            val levelCm = h * 100.0
+            val percentage = volume / fullVolume * 100.0
+            val volumeM3 = volume
+            val massT = mass
+
+            rows.add(TableRow(levelCm, percentage, volumeM3, massT))
+            h += stepM
+        }
+        return rows
+    }
+
+    private fun halfEllipseSuitcaseSegmentArea(h: Double, b: Double, a: Double): Double {
+        val y = (-b + h).coerceIn(-b, 0.0)
+        val t = y / b
+        return a * b * (asin(t) + Math.PI / 2.0 + t * sqrt(1 - t * t))
+    }
 }

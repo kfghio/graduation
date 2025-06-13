@@ -75,6 +75,16 @@ class MainActivity : AppCompatActivity() {
         buttonEllipticalTruncatedTank.setOnClickListener {
             showEllipticalTruncatedInputDialog()
         }
+
+        val buttonRoundedRectTank = findViewById<Button>(R.id.button_rounded_rect_tank)
+        buttonRoundedRectTank .setOnClickListener {
+            showRoundedRectInputDialog()
+        }
+
+        val buttonSuitcaseTank = findViewById<Button>(R.id.button_suitcase_tank)
+        buttonSuitcaseTank .setOnClickListener {
+            showSuitcaseInputDialog()
+        }
     }
 
     private fun showError(message: String) =
@@ -325,7 +335,7 @@ class MainActivity : AppCompatActivity() {
             }
             .setNegativeButton("Отмена", null)
             .show()
-    } //проверить !!!
+    } //проверить
 
     private fun showRectangularInputDialog() {
         val dialogView = layoutInflater.inflate(R.layout.dialog_rectangular_input, null)
@@ -450,6 +460,112 @@ class MainActivity : AppCompatActivity() {
             .setNegativeButton("Отмена", null)
             .show()
     } // проверить
+
+    private fun showRoundedRectInputDialog() {
+        val v = layoutInflater.inflate(R.layout.dialog_rounded_rect_input, null)
+
+        val etL   = v.findViewById<EditText>(R.id.edit_text_length)
+        val etH1  = v.findViewById<EditText>(R.id.edit_text_height1)
+        val etH2  = v.findViewById<EditText>(R.id.edit_text_height2)
+        val etB   = v.findViewById<EditText>(R.id.edit_text_width)
+        val etSt  = v.findViewById<EditText>(R.id.edit_text_step)
+        val sp    = v.findViewById<Spinner>(R.id.spinner_liquid)
+
+        sp.adapter = ArrayAdapter(
+            this, android.R.layout.simple_spinner_item, liquids.map { it.name }
+        ).apply { setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
+
+        AlertDialog.Builder(this)
+            .setTitle("Прямоугольно-округлая ёмкость")
+            .setView(v)
+            .setPositiveButton("Рассчитать") { _, _ ->
+
+                val length = etL.text.toString().toDoubleOrNull()
+                val h1     = etH1.text.toString().toDoubleOrNull()
+                val h2     = etH2.text.toString().toDoubleOrNull()
+                val width  = etB.text.toString().toDoubleOrNull()
+                val step   = etSt.text.toString().toDoubleOrNull()
+                val liquid = liquids[sp.selectedItemPosition]
+
+                if (length == null || h1 == null || h2 == null || width == null || step == null ||
+                    length <= 0 || h1 <= 0 || h2 <= 0 || width <= 0 || step <= 0) {
+
+                    Toast.makeText(this, "Введите корректные положительные значения", Toast.LENGTH_SHORT).show()
+
+                } else if (h1 <= h2) {
+
+                    Toast.makeText(this, "H1 должно быть больше H2", Toast.LENGTH_SHORT).show()
+
+                } else if (width <= h1 - h2) {
+
+                    Toast.makeText(this, "B должно быть больше (H1 − H2)", Toast.LENGTH_SHORT).show()
+
+                } else if (step > h1) {
+                    Toast.makeText(this, "Шаг не должен превышать высоту ($h1 мм)", Toast.LENGTH_SHORT).show()
+                } else {
+                    val tableData = TankCalculator.generateRoundedRectTable(lengthMm  = length, height1Mm = h1, height2Mm = h2, widthMm   = width, stepMm    = step, density   = liquid.density)
+
+                    val intent = Intent(this, TableActivity::class.java)
+                    intent.putParcelableArrayListExtra("table_data", ArrayList(tableData))
+                    startActivity(intent)
+                }
+            }
+            .setNegativeButton("Отмена", null)
+            .show()
+    }
+
+    private fun showSuitcaseInputDialog() {
+        val v = layoutInflater.inflate(R.layout.dialog_rounded_rect_input, null)
+
+        val etL   = v.findViewById<EditText>(R.id.edit_text_length)
+        val etH1  = v.findViewById<EditText>(R.id.edit_text_height1)
+        val etH2  = v.findViewById<EditText>(R.id.edit_text_height2)
+        val etB   = v.findViewById<EditText>(R.id.edit_text_width)
+        val etSt  = v.findViewById<EditText>(R.id.edit_text_step)
+        val sp    = v.findViewById<Spinner>(R.id.spinner_liquid)
+
+        sp.adapter = ArrayAdapter(
+            this, android.R.layout.simple_spinner_item, liquids.map { it.name }
+        ).apply { setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
+
+        AlertDialog.Builder(this)
+            .setTitle("Чемоданная ёмкость (плоские днища)")
+            .setView(v)
+            .setPositiveButton("Рассчитать") { _, _ ->
+
+                val length = etL.text.toString().toDoubleOrNull()
+                val h1     = etH1.text.toString().toDoubleOrNull()
+                val h2     = etH2.text.toString().toDoubleOrNull()
+                val width  = etB.text.toString().toDoubleOrNull()
+                val step   = etSt.text.toString().toDoubleOrNull()
+                val liquid = liquids[sp.selectedItemPosition]
+
+                if (length == null || h1 == null || h2 == null || width == null || step == null ||
+                    length <= 0 || h1 <= 0 || h2 <= 0 || width <= 0 || step <= 0) {
+                    Toast.makeText(this, "Введите корректные положительные значения", Toast.LENGTH_SHORT).show()
+                } else if (h1 <= h2) {
+                    Toast.makeText(this, "H1 должно быть больше H2", Toast.LENGTH_SHORT).show()
+                } else if (step > h1) {
+                    Toast.makeText(this, "Шаг не должен превышать высоту ($h1 мм)", Toast.LENGTH_SHORT).show()
+                } else {
+
+                    val tableData = TankCalculator.generateSuitcaseTable(
+                        lengthMm  = length,
+                        height1Mm = h1,
+                        height2Mm = h2,
+                        widthMm   = width,
+                        stepMm    = step,
+                        density   = liquid.density
+                    )
+
+                    val intent = Intent(this, TableActivity::class.java)
+                    intent.putParcelableArrayListExtra("table_data", ArrayList(tableData))
+                    startActivity(intent)
+                }
+            }
+            .setNegativeButton("Отмена", null)
+            .show()
+    }
 
 
 }
