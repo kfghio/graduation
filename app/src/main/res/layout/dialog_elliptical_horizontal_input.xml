@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <EditText
+        android:id="@+id/edit_text_length"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Длина (мм)"
+        android:inputType="numberDecimal" />
+
+    <EditText
+        android:id="@+id/edit_text_height"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Высота (мм)"
+        android:inputType="numberDecimal" />
+
+    <EditText
+        android:id="@+id/edit_text_axis"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Ось (мм)"
+        android:inputType="numberDecimal" />
+
+    <EditText
+        android:id="@+id/edit_text_step"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Шаг (мм)"
+        android:inputType="numberDecimal" />
+
+    <Spinner
+        android:id="@+id/spinner_liquid"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp" />
+
+</LinearLayout>
