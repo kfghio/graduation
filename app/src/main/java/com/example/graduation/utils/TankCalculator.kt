@@ -315,10 +315,7 @@ object TankCalculator {
         val H_mm = heightMm
         val y0_mm = H_mm / 2.0
 
-        require(widthMm <= axisMm) { "widthMm must be ≤ axisMm" }
-
         val denom = 1.0 - (widthMm * widthMm) / (4.0 * a_mm * a_mm)
-        require(denom > 0) { "Недопустимое сочетание A, B и H: хорда не может лежать выше вершины эллипса." }
         val b_mm = y0_mm / sqrt(denom)
 
         val a = a_mm / 1000.0
@@ -340,10 +337,10 @@ object TankCalculator {
             val area = segmentEllipticalArea(y, a, b) - areaBottom
             val vol  = area * lengthM
             rows += TableRow(
-                levelCm   = hM * 100.0,
+                levelCm = hM * 100.0,
                 percentage= vol / fullVolM3 * 100.0,
-                volumeM3  = vol,
-                massT     = vol * density
+                volumeM3 = vol,
+                massT = vol * density
             )
             hM += stepM
         }
@@ -377,19 +374,19 @@ object TankCalculator {
 
 
         val fullArea = crossSectionArea(H1, R, centerW, H2, B)
-        val fullVol  = fullArea * L
+        val fullVol = fullArea * L
 
         val rows = mutableListOf<TableRow>()
         var h = 0.0
         while (h <= H1 + 1e-9) {
-            val area  = crossSectionArea(h, R, centerW, H2, B)
-            val vol   = area * L
-            val mass  = vol * density
+            val area = crossSectionArea(h, R, centerW, H2, B)
+            val vol = area * L
+            val mass = vol * density
 
-            val levelCm    = h * 100.0
+            val levelCm = h * 100.0
             val percentage = vol / fullVol * 100.0
-            val volumeM3   = vol
-            val massT      = mass
+            val volumeM3 = vol
+            val massT = mass
 
             rows.add(TableRow(levelCm, percentage, volumeM3, massT))
             h += stepM
@@ -403,9 +400,7 @@ object TankCalculator {
         else -> rR * rR * acos((rR - h) / rR) - (rR - h) * sqrt(2 * rR * h - h * h)
     }
 
-    private fun crossSectionArea(
-        h: Double, r: Double, centerW: Double, hH2: Double, bB: Double
-    ): Double {
+    private fun crossSectionArea(h: Double, r: Double, centerW: Double, hH2: Double, bB: Double): Double {
         val h1 = min(h, r)
         var area = centerW * h1 + 2 * circularRecSegmentArea(h1, r)
 
@@ -421,7 +416,7 @@ object TankCalculator {
         return area
     }
 
-    /* ──────── Чемоданная емкость горизонтальная с плоскими днищами ─────── */
+    /* ──────── Чемоданная емкость с плоскими днищами ─────── */
     fun generateSuitcaseTable(
         lengthMm: Double,
         height1Mm: Double,
@@ -435,17 +430,17 @@ object TankCalculator {
         val b = (height1Mm - height2Mm) / 2.0 / 1000.0
         val H1 = height1Mm / 1000.0
         val H2 = height2Mm / 1000.0
-        val widthM = widthMm  / 1000.0
+        val widthM = widthMm / 1000.0
         val lengthM = lengthMm / 1000.0
 
         val halfEllipseArea = Math.PI * a * b / 2.0
 
         val fullCrossArea = halfEllipseArea * 2 + widthM * H2
-        val fullVolume    = fullCrossArea * lengthM
+        val fullVolume = fullCrossArea * lengthM
 
         val rows  = mutableListOf<TableRow>()
         val stepM = stepMm / 1000.0
-        var h     = 0.0
+        var h = 0.0
 
         while (h <= H1 + 1e-9) {
 
@@ -483,5 +478,32 @@ object TankCalculator {
         val y = (-b + h).coerceIn(-b, 0.0)
         val t = y / b
         return a * b * (asin(t) + Math.PI / 2.0 + t * sqrt(1 - t * t))
+    }
+
+    /* ───────── Вертикальная цилиндрическая ёмкость с плоскими днищами ───────── */
+    fun generateVerticalCylindricalTable(
+        heightMm: Double,
+        diameterMm: Double,
+        stepMm: Double,
+        density: Double
+    ): List<TableRow> {
+
+        val radiusM   = diameterMm / 2.0 / 1000.0
+        val areaM2    = Math.PI * radiusM * radiusM
+        val fullVol   = areaM2 * heightMm / 1000.0
+
+        val rows   = mutableListOf<TableRow>()
+        var hMm    = 0.0
+
+        while (hMm <= heightMm + 1e-9) {
+            val volM3 = areaM2 * (hMm / 1000.0)
+            val massT = volM3 * density
+            val levelCm = hMm / 10.0
+            val percent = volM3 / fullVol * 100.0
+
+            rows.add(TableRow(levelCm, percent, volM3, massT))
+            hMm += stepMm
+        }
+        return rows
     }
 }

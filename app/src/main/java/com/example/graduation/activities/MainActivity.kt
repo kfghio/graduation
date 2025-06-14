@@ -6,7 +6,9 @@ import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Spinner
+import android.widget.TextView
 import android.widget.Toast
+import android.widget.ViewFlipper
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.example.graduation.R
@@ -27,9 +29,36 @@ class MainActivity : AppCompatActivity() {
 
     )
 
+    private enum class Section { HORIZONTAL, VERTICAL, OTHER }
+    private var currentSection = Section.HORIZONTAL
+
+    private lateinit var titleView: TextView
+    private lateinit var flipper: ViewFlipper
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        titleView = findViewById(R.id.text_section_title)
+        flipper   = findViewById(R.id.view_flipper)
+
+        findViewById<Button>(R.id.button_prev_section).setOnClickListener {
+            currentSection = when (currentSection) {
+                Section.HORIZONTAL -> Section.OTHER
+                Section.VERTICAL -> Section.HORIZONTAL
+                Section.OTHER -> Section.VERTICAL
+            }
+            showSection()
+        }
+
+        findViewById<Button>(R.id.button_next_section).setOnClickListener {
+            currentSection = when (currentSection) {
+                Section.HORIZONTAL -> Section.VERTICAL
+                Section.VERTICAL -> Section.OTHER
+                Section.OTHER -> Section.HORIZONTAL
+            }
+            showSection()
+        }
 
         val buttonRectangularTank = findViewById<Button>(R.id.button_rectangular_tank)
         buttonRectangularTank.setOnClickListener {
@@ -77,13 +106,39 @@ class MainActivity : AppCompatActivity() {
         }
 
         val buttonRoundedRectTank = findViewById<Button>(R.id.button_rounded_rect_tank)
-        buttonRoundedRectTank .setOnClickListener {
+        buttonRoundedRectTank.setOnClickListener {
             showRoundedRectInputDialog()
         }
 
         val buttonSuitcaseTank = findViewById<Button>(R.id.button_suitcase_tank)
-        buttonSuitcaseTank .setOnClickListener {
+        buttonSuitcaseTank.setOnClickListener {
             showSuitcaseInputDialog()
+        }
+
+        val buttonVerticalCylindricalTank = findViewById<Button>(R.id.button_vertical_cylindrical_tank)
+        buttonVerticalCylindricalTank.setOnClickListener {
+            showVerticalCylindricalInputDialog()
+        }
+
+
+
+        showSection()
+    }
+
+    private fun showSection() {
+        when (currentSection) {
+            Section.HORIZONTAL -> {
+                titleView.text = "Горизонтальные ёмкости"
+                flipper.displayedChild = 0
+            }
+            Section.VERTICAL -> {
+                titleView.text = "Вертикальные ёмкости"
+                flipper.displayedChild = 1
+            }
+            Section.OTHER -> {
+                titleView.text = "Прочее"
+                flipper.displayedChild = 2
+            }
         }
     }
 
@@ -567,5 +622,55 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
+    private fun showVerticalCylindricalInputDialog() {
+        val dialog = layoutInflater.inflate(R.layout.dialog_vertical_cylindrical_input, null)
+
+        val etH   = dialog.findViewById<EditText>(R.id.edit_text_height)
+        val etD   = dialog.findViewById<EditText>(R.id.edit_text_diameter)
+        val etSt  = dialog.findViewById<EditText>(R.id.edit_text_step)
+        val sp    = dialog.findViewById<Spinner>(R.id.spinner_liquid)
+
+        sp.adapter = ArrayAdapter(
+            this, android.R.layout.simple_spinner_item, liquids.map { it.name }
+        ).apply { setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
+
+        AlertDialog.Builder(this)
+            .setTitle("Вертикальная цилиндрическая ёмкость")
+            .setView(dialog)
+            .setPositiveButton("Рассчитать") { _, _ ->
+
+                val height = etH.text.toString().toDoubleOrNull()
+                val diameter = etD.text.toString().toDoubleOrNull()
+                val step = etSt.text.toString().toDoubleOrNull()
+                val liquid = liquids[sp.selectedItemPosition]
+
+                if (height == null || diameter == null || step == null ||
+                    height <= 0 || diameter <= 0 || step <= 0) {
+
+                    Toast.makeText(this, "Введите корректные положительные значения", Toast.LENGTH_SHORT).show()
+
+                } else if (step > height) {
+
+                    Toast.makeText(this, "Шаг не должен превышать высоту ($height мм)", Toast.LENGTH_SHORT).show()
+
+                } else {
+
+                    val data = TankCalculator.generateVerticalCylindricalTable(
+                        heightMm = height,
+                        diameterMm = diameter,
+                        stepMm = step,
+                        density = liquid.density
+                    )
+
+                    startActivity(
+                        Intent(this, TableActivity::class.java).apply {
+                            putParcelableArrayListExtra("table_data", ArrayList(data))
+                        }
+                    )
+                }
+            }
+            .setNegativeButton("Отмена", null)
+            .show()
+    }
 
 }

@@ -44,5 +44,5 @@
         android:id="@+id/spinner_liquid"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Тип жидкости" />
+        android:layout_marginTop="12dp" />
 </LinearLayout>
