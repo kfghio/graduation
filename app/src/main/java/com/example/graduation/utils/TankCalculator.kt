@@ -438,7 +438,7 @@ object TankCalculator {
         val fullCrossArea = halfEllipseArea * 2 + widthM * H2
         val fullVolume = fullCrossArea * lengthM
 
-        val rows  = mutableListOf<TableRow>()
+        val rows = mutableListOf<TableRow>()
         val stepM = stepMm / 1000.0
         var h = 0.0
 
@@ -488,12 +488,12 @@ object TankCalculator {
         density: Double
     ): List<TableRow> {
 
-        val radiusM   = diameterMm / 2.0 / 1000.0
-        val areaM2    = Math.PI * radiusM * radiusM
-        val fullVol   = areaM2 * heightMm / 1000.0
+        val radiusM = diameterMm / 2.0 / 1000.0
+        val areaM2 = Math.PI * radiusM * radiusM
+        val fullVol = areaM2 * heightMm / 1000.0
 
-        val rows   = mutableListOf<TableRow>()
-        var hMm    = 0.0
+        val rows = mutableListOf<TableRow>()
+        var hMm = 0.0
 
         while (hMm <= heightMm + 1e-9) {
             val volM3 = areaM2 * (hMm / 1000.0)
@@ -506,4 +506,94 @@ object TankCalculator {
         }
         return rows
     }
+
+    /* ───────── Вертикальная цилиндрическая ёмкость с усечённо-конусным днищем ─────── */
+    fun generateVerticalFrustumBottomTable(
+        heightMm: Double,
+        bigDiamMm: Double,
+        smallDiamMm: Double,
+        frustumMm: Double,
+        stepMm: Double,
+        density: Double
+    ): List<TableRow> {
+
+        val r1 = bigDiamMm / 2.0 / 1000.0
+        val r2 = smallDiamMm / 2.0 / 1000.0
+        val f = frustumMm / 1000.0
+        val hC = (heightMm - frustumMm) / 1000.0
+        val stepM = stepMm / 1000.0
+
+        val frustumFullVol = verticalFrustumPartialVolume(f, r2, r1, f)
+        val cylSectionArea = Math.PI * r1 * r1
+        val fullVolume = frustumFullVol + cylSectionArea * hC
+
+        val rows = mutableListOf<TableRow>()
+        var h = 0.0
+        val H = hC + f
+
+        while (h <= H + 1e-9) {
+
+            val volM3 = if (h <= f)
+                verticalFrustumPartialVolume(h, r2, r1, f)
+            else
+                frustumFullVol + cylSectionArea * (h - f)
+
+            val massT = volM3 * density
+            val levelCm = h * 100.0
+            val percent = volM3 / fullVolume * 100.0
+
+            rows.add(TableRow(levelCm, percent, volM3, massT))
+            h += stepM
+        }
+        return rows
+    }
+
+    private fun radiusVerticalFrustumAt(t: Double, r2: Double, r1: Double, f: Double) = r2 + (r1 - r2) * (t / f)
+
+    private fun verticalFrustumPartialVolume(t: Double, r2: Double, r1: Double, f: Double): Double {
+        if (t <= 0.0) return 0.0
+        val rt = radiusVerticalFrustumAt(t, r2, r1, f)
+        return Math.PI * t / 3.0 * (r2 * r2 + r2 * rt + rt * rt)
+    }
+
+    fun generateWineBarrelTable(
+        heightMm: Double,
+        bigDiamMm: Double,
+        smallDiamMm: Double,
+        stepMm: Double,
+        density: Double
+    ): List<TableRow> {
+
+        val H  = heightMm / 1000.0
+        val r1 = bigDiamMm / 2.0 / 1000.0
+        val r2 = smallDiamMm / 2.0 / 1000.0
+        val deltaR  = r1 - r2
+        val stepM = stepMm / 1000.0
+
+        val fullVolume = volumeWineBarrelTo(H, H, r2, deltaR)
+
+        val rows = mutableListOf<TableRow>()
+        var h = 0.0
+        while (h <= H + 1e-9) {
+
+            val volM3 = volumeWineBarrelTo(h, H, r2, deltaR)
+            val massT = volM3 * density
+            val levelCm = h * 100.0
+            val percent = volM3 / fullVolume * 100.0
+
+            rows.add(TableRow(levelCm, percent, volM3, massT))
+            h += stepM
+        }
+        return rows
+    }
+
+    private fun volumeWineBarrelTo(h: Double, H: Double, r2: Double, deltaR: Double): Double {
+        val α = Math.PI * h / H
+        val term1 = Math.PI * r2 * r2 * h
+        val term2 = -2.0 * r2 * deltaR * H * (cos(α) - 1.0)
+        val term3 = Math.PI * deltaR * deltaR * h / 2.0
+        val term4 = -deltaR * deltaR * H * sin(2.0 * α) / 4.0
+        return term1 + term2 + term3 + term4
+    }
+
 }

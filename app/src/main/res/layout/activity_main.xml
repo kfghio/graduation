@@ -113,6 +113,18 @@ android:padding="16dp">
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Цилиндрическая ёмкость вертикальная с плоскими днищами"/>
+
+            <Button
+                android:id="@+id/button_vertical_frustum_tank"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Цилиндрическая емкость вертикальная с плоским и усеченно-конусным днищем" />
+
+            <Button
+                android:id="@+id/button_vertical_wine_tank"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Винная емкость вертикальная с плоскими днищами" />
         </LinearLayout>
     </ScrollView>
 
