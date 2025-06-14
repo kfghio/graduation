@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+
+    <EditText
+        android:id="@+id/et_height"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Высота (H, мм)"
+        android:inputType="numberDecimal"/>
+
+    <EditText
+        android:id="@+id/et_bigA"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Ширина (A1, мм)"
+        android:inputType="numberDecimal"
+        android:layout_marginTop="8dp"/>
+
+    <EditText
+        android:id="@+id/et_bigB"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Глубина (B1, мм)"
+        android:inputType="numberDecimal"
+        android:layout_marginTop="8dp"/>
+
+    <EditText
+        android:id="@+id/et_smallA"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Ширина (a2, мм)"
+        android:inputType="numberDecimal"
+        android:layout_marginTop="8dp"/>
+
+    <EditText
+        android:id="@+id/et_smallB"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Глубина (b2, мм)"
+        android:inputType="numberDecimal"
+        android:layout_marginTop="8dp"/>
+
+    <EditText
+        android:id="@+id/et_frustum"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Высота (f, мм)"
+        android:inputType="numberDecimal"
+        android:layout_marginTop="8dp"/>
+
+    <EditText
+        android:id="@+id/et_step"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Шаг (h, мм)"
+        android:inputType="numberDecimal"
+        android:layout_marginTop="8dp"/>
+
+    <Spinner
+        android:id="@+id/spinner_liquid"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"/>
+</LinearLayout>

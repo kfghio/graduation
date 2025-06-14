@@ -556,6 +556,7 @@ object TankCalculator {
         return Math.PI * t / 3.0 * (r2 * r2 + r2 * rt + rt * rt)
     }
 
+    /* ───────── Винная емкость вертикальная с плоскими днищами ─────── */
     fun generateWineBarrelTable(
         heightMm: Double,
         bigDiamMm: Double,
@@ -588,12 +589,67 @@ object TankCalculator {
     }
 
     private fun volumeWineBarrelTo(h: Double, H: Double, r2: Double, deltaR: Double): Double {
-        val α = Math.PI * h / H
+        val a = Math.PI * h / H
         val term1 = Math.PI * r2 * r2 * h
-        val term2 = -2.0 * r2 * deltaR * H * (cos(α) - 1.0)
+        val term2 = -2.0 * r2 * deltaR * H * (cos(a) - 1.0)
         val term3 = Math.PI * deltaR * deltaR * h / 2.0
-        val term4 = -deltaR * deltaR * H * sin(2.0 * α) / 4.0
+        val term4 = -deltaR * deltaR * H * sin(2.0 * a) / 4.0
         return term1 + term2 + term3 + term4
     }
+
+    /* ───────── Вертикальная прямоугольная ёмкость с усечённо-пирамидальным днищем ───────── */
+    fun generateRectFrustumBottomTable(
+        heightMm: Double,
+        bigAMm: Double,
+        bigBMm: Double,
+        smallAm: Double,
+        smallBm: Double,
+        frustumMm: Double,
+        stepMm: Double,
+        density: Double
+    ): List<TableRow> {
+
+        val A1 = bigAMm / 1000.0
+        val B1 = bigBMm / 1000.0
+        val a2 = smallAm / 1000.0
+        val b2 = smallBm / 1000.0
+        val f = frustumMm / 1000.0
+        val hC = (heightMm - frustumMm) / 1000.0
+        val step = stepMm / 1000.0
+        val H = hC + f
+
+        val p = (A1 - a2) / f
+        val q = (B1 - b2) / f
+
+        val frustFullVol = pyramidPartialVolume(f, a2, b2, q, p)
+        val rectArea = A1 * B1
+        val fullVolume = frustFullVol + rectArea * hC
+
+        val rows = mutableListOf<TableRow>()
+        var h = 0.0
+        while (h <= H + 1e-9) {
+
+            val volM3 = if (h <= f)
+                pyramidPartialVolume(h, a2, b2, q, p)
+            else
+                frustFullVol + rectArea * (h - f)
+
+            val massT   = volM3 * density
+            val levelCm = h * 100.0
+            val percent = volM3 / fullVolume * 100.0
+
+            rows.add(TableRow(levelCm, percent, volM3, massT))
+            h += step
+        }
+        return rows
+    }
+
+    private fun pyramidPartialVolume(t: Double, a2: Double, b2: Double, q: Double, p: Double): Double {
+        if (t <= 0.0) return 0.0
+        val t2 = t * t
+        val t3 = t2 * t
+        return a2 * b2 * t + (a2 * q + b2 * p) * t2 / 2.0 + p * q * t3 / 3.0
+    }
+
 
 }

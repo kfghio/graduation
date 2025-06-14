@@ -125,6 +125,12 @@ android:padding="16dp">
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Винная емкость вертикальная с плоскими днищами" />
+
+            <Button
+                android:id="@+id/button_vertical_rect_frustum_tank"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Прямоугольная емкость вертикальная с плоским и усеченно-пирамидальным днищем" />
         </LinearLayout>
     </ScrollView>
 

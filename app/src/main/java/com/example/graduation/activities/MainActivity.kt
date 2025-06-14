@@ -125,10 +125,14 @@ class MainActivity : AppCompatActivity() {
             showVerticalFrustumInputDialog()
         }
 
-
         val buttonVerticalWineTank = findViewById<Button>(R.id.button_vertical_wine_tank)
         buttonVerticalWineTank.setOnClickListener {
             showWineBarrelInputDialog()
+        }
+
+        val buttonVerticalRectFrustumTank = findViewById<Button>(R.id.button_vertical_rect_frustum_tank)
+        buttonVerticalRectFrustumTank.setOnClickListener {
+            showRectFrustumInputDialog()
         }
 
 
@@ -685,8 +689,7 @@ class MainActivity : AppCompatActivity() {
                 val st = etSt.text.toString().toDoubleOrNull()
                 val liq = liquids[sp.selectedItemPosition]
 
-                if (H == null || D1 == null || D2 == null || f == null || st == null ||
-                    H <= 0 || D1 <= 0 || D2 <= 0 || f <= 0 || st <= 0) {
+                if (H == null || D1 == null || D2 == null || f == null || st == null || H <= 0 || D1 <= 0 || D2 <= 0 || f <= 0 || st <= 0) {
                     Toast.makeText(this, "Введите корректные положительные значения", Toast.LENGTH_SHORT).show()
                 } else if (D2 >= D1) {
                     Toast.makeText(this, "D2 должно быть меньше D1", Toast.LENGTH_SHORT).show()
@@ -752,6 +755,61 @@ class MainActivity : AppCompatActivity() {
             .setNegativeButton("Отмена", null)
             .show()
     }
+
+    private fun showRectFrustumInputDialog() {
+        val v = layoutInflater.inflate(R.layout.dialog_rect_frustum_input, null)
+
+        fun EditText.d() = text.toString().toDoubleOrNull()
+
+        val H = v.findViewById<EditText>(R.id.et_height)
+        val A1 = v.findViewById<EditText>(R.id.et_bigA)
+        val B1 = v.findViewById<EditText>(R.id.et_bigB)
+        val a2 = v.findViewById<EditText>(R.id.et_smallA)
+        val b2 = v.findViewById<EditText>(R.id.et_smallB)
+        val fEt = v.findViewById<EditText>(R.id.et_frustum)
+        val stepEt = v.findViewById<EditText>(R.id.et_step)
+        val sp = v.findViewById<Spinner>(R.id.spinner_liquid)
+
+        sp.adapter = ArrayAdapter(
+            this, android.R.layout.simple_spinner_item, liquids.map { it.name }
+        ).apply { setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
+
+        AlertDialog.Builder(this)
+            .setTitle("Прямоугольная ёмкость (усеч. пирамидальное дно)")
+            .setView(v)
+            .setPositiveButton("Рассчитать") { _, _ ->
+
+                val h = H.d()
+                val A = A1.d()
+                val B = B1.d()
+                val a = a2.d()
+                val b = b2.d()
+                val f = fEt.d()
+                val st = stepEt.d()
+                val liq = liquids[sp.selectedItemPosition]
+
+                if (listOf(h, A, B, a, b, f, st).any { it == null || it <= 0 }) {
+                    Toast.makeText(this, "Введите корректные положительные значения", Toast.LENGTH_SHORT).show()
+                } else if (a!! >= A!! || b!! >= B!!) {
+                    Toast.makeText(this, "a2 и b2 должны быть меньше A1 и B1", Toast.LENGTH_SHORT).show()
+                } else if (f!! >= h!!) {
+                    Toast.makeText(this, "f должно быть меньше H", Toast.LENGTH_SHORT).show()
+                } else if (st!! > h) {
+                    Toast.makeText(this, "Шаг не должен превышать высоту ($h мм)", Toast.LENGTH_SHORT).show()
+                } else {
+                    val table = TankCalculator.generateRectFrustumBottomTable(heightMm = h, bigAMm = A, bigBMm = B, smallAm = a, smallBm = b, frustumMm = f, stepMm = st, density = liq.density
+                    )
+                    startActivity(
+                        Intent(this, TableActivity::class.java).apply {
+                            putParcelableArrayListExtra("table_data", ArrayList(table))
+                        }
+                    )
+                }
+            }
+            .setNegativeButton("Отмена", null)
+            .show()
+    }
+
 
 
 }
