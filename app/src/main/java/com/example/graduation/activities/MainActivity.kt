@@ -135,6 +135,20 @@ class MainActivity : AppCompatActivity() {
             showRectFrustumInputDialog()
         }
 
+        val buttonSphericalTank = findViewById<Button>(R.id.button_spherical_tank)
+        buttonSphericalTank.setOnClickListener {
+            showSphereInputDialog()
+        }
+
+        val buttonVerticalArcTank = findViewById<Button>(R.id.button_vertical_arc_bottom)
+        buttonVerticalArcTank.setOnClickListener {
+            showArcBottomInputDialog()
+        }
+
+        val buttonSingleConeTank = findViewById<Button>(R.id.button_single_cone_tank)
+        buttonSingleConeTank.setOnClickListener {
+            showSingleConeDialog()
+        }
 
         showSection()
     }
@@ -301,7 +315,7 @@ class MainActivity : AppCompatActivity() {
                 if (length == null || diameter == null || endHeight == null || step == null ||
                     length <= 0 || diameter <= 0 || endHeight <= 0 || step <= 0) {
                     Toast.makeText(this, "Введите корректные положительные значения", Toast.LENGTH_SHORT).show()
-                } else if (endHeight >= diameter / 2) {
+                } else if (endHeight > diameter / 2) {
                     showError("Высота дугового днища должна быть < радиуса (≤ ${diameter / 2} мм)")
                 } else if (step > diameter) {
                     showError("Шаг не должен превышать диаметр ($diameter мм)")
@@ -314,7 +328,7 @@ class MainActivity : AppCompatActivity() {
             }
             .setNegativeButton("Отмена", null)
             .show()
-    } // проверить
+    }
 
     private fun showConicalTankInputDialog() {
         val dialogView = layoutInflater.inflate(R.layout.dialog_cylindrical_elliptical_input, null)
@@ -354,7 +368,7 @@ class MainActivity : AppCompatActivity() {
             }
             .setNegativeButton("Отмена", null)
             .show()
-    } //проверить
+    }
 
     private fun showFrustumTankInputDialog() {
         val dialogView = layoutInflater.inflate(R.layout.dialog_cylindrical_frustum_input, null)
@@ -797,7 +811,7 @@ class MainActivity : AppCompatActivity() {
                 } else if (st!! > h) {
                     Toast.makeText(this, "Шаг не должен превышать высоту ($h мм)", Toast.LENGTH_SHORT).show()
                 } else {
-                    val table = TankCalculator.generateRectFrustumBottomTable(heightMm = h, bigAMm = A, bigBMm = B, smallAm = a, smallBm = b, frustumMm = f, stepMm = st, density = liq.density
+                    val table = TankCalculator.generateVerticalRectFrustumTable(heightMm = h, bigAMm = A, bigBMm = B, smallAm = a, smallBm = b, frustumMm = f, stepMm = st, density = liq.density
                     )
                     startActivity(
                         Intent(this, TableActivity::class.java).apply {
@@ -810,6 +824,128 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
+    private fun showSphereInputDialog() {
+        val v = layoutInflater.inflate(R.layout.dialog_sphere_input, null)
+
+        val etD = v.findViewById<EditText>(R.id.edit_text_diameter)
+        val etSt = v.findViewById<EditText>(R.id.edit_text_step)
+        val sp = v.findViewById<Spinner>(R.id.spinner_liquid)
+
+        sp.adapter = ArrayAdapter(
+            this, android.R.layout.simple_spinner_item, liquids.map { it.name }
+        ).apply { setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
+
+        AlertDialog.Builder(this)
+            .setTitle("Сферическая ёмкость")
+            .setView(v)
+            .setPositiveButton("Рассчитать") { _, _ ->
+
+                val D = etD.text.toString().toDoubleOrNull()
+                val st = etSt.text.toString().toDoubleOrNull()
+                val liq = liquids[sp.selectedItemPosition]
+
+                if (D == null || st == null || D <= 0 || st <= 0) {
+                    Toast.makeText(this, "Введите корректные положительные значения", Toast.LENGTH_SHORT).show()
+                } else if (st > D) {
+                    Toast.makeText(this, "Шаг не должен превышать диаметр ($D мм)", Toast.LENGTH_SHORT).show()
+                } else {
+                    val table = TankCalculator.generateSphereTable(diameterMm = D, stepMm = st, density = liq.density)
+
+                    startActivity(
+                        Intent(this, TableActivity::class.java).apply {
+                            putParcelableArrayListExtra("table_data", ArrayList(table))
+                        }
+                    )
+                }
+            }
+            .setNegativeButton("Отмена", null)
+            .show()
+    }
+
+    private fun showArcBottomInputDialog() {
+        val v = layoutInflater.inflate(R.layout.dialog_arc_bottom_input, null)
+
+        val etD = v.findViewById<EditText>(R.id.edit_text_diameter)
+        val etF = v.findViewById<EditText>(R.id.edit_text_cap_height)
+        val etSt = v.findViewById<EditText>(R.id.edit_text_step)
+        val sp = v.findViewById<Spinner>(R.id.spinner_liquid)
+
+        sp.adapter = ArrayAdapter(
+            this, android.R.layout.simple_spinner_item, liquids.map { it.name }
+        ).apply { setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
+
+        AlertDialog.Builder(this)
+            .setTitle("Вертикальное дуговое днище")
+            .setView(v)
+            .setPositiveButton("Рассчитать") { _, _ ->
+
+                val D = etD.text.toString().toDoubleOrNull()
+                val f = etF.text.toString().toDoubleOrNull()
+                val st = etSt.text.toString().toDoubleOrNull()
+                val liquid = liquids[sp.selectedItemPosition]
+
+                if (D == null || f == null || st == null || D <= 0 || f <= 0 || st <= 0) {
+                    Toast.makeText(this, "Введите корректные положительные значения", Toast.LENGTH_SHORT).show()
+                } else if (f > D / 2) {
+                    Toast.makeText(this, "f не может быть больше D / 2", Toast.LENGTH_SHORT).show()
+                } else if (st > D) {
+                    Toast.makeText(this, "Шаг не должен превышать диаметр сегмента ($D мм)", Toast.LENGTH_SHORT).show()
+                } else {
+                    val table = TankCalculator.generateSingleArcTankTable(diameterMm = D, capHeightMm = f, stepMm = st, density = liquid.density)
+
+                    startActivity(
+                        Intent(this, TableActivity::class.java).apply {
+                            putParcelableArrayListExtra("table_data", ArrayList(table))
+                        }
+                    )
+                }
+            }
+            .setNegativeButton("Отмена", null)
+            .show()
+    }
+
+    private fun showSingleConeDialog() {
+        val v = layoutInflater.inflate(R.layout.dialog_single_cone_input, null)
+
+        val etD = v.findViewById<EditText>(R.id.et_diameter)
+        val etF = v.findViewById<EditText>(R.id.et_cone_height)
+        val etSt = v.findViewById<EditText>(R.id.et_step)
+        val sp = v.findViewById<Spinner>(R.id.spinner_liquid)
+
+        sp.adapter = ArrayAdapter(
+            this, android.R.layout.simple_spinner_item, liquids.map { it.name }
+        ).apply { setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
+
+        AlertDialog.Builder(this)
+            .setTitle("Коническое днище")
+            .setView(v)
+            .setPositiveButton("Рассчитать") { _, _ ->
+
+                val D  = etD.text.toString().toDoubleOrNull()
+                val f  = etF.text.toString().toDoubleOrNull()
+                val st = etSt.text.toString().toDoubleOrNull()
+                val liq= liquids[sp.selectedItemPosition]
+
+                if (D == null || f == null || st == null ||
+                    D <= 0 || f <= 0 || st <= 0) {
+                    showError("Введите корректные положительные значения")
+                } else if (f > D / 2) {
+                    showError("f не может быть больше D / 2")
+                } else if (st > D) {
+                    showError("Шаг не должен превышать высоту D")
+                } else {
+                    val table = TankCalculator.generateSingleConeTankTable(diameterMm = D, coneHeightMm = f, stepMm = st, density = liq.density)
+
+                    startActivity(
+                        Intent(this, TableActivity::class.java).apply {
+                            putParcelableArrayListExtra("table_data", ArrayList(table))
+                        }
+                    )
+                }
+            }
+            .setNegativeButton("Отмена", null)
+            .show()
+    }
 
 
 }

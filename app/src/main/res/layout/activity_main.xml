@@ -144,6 +144,24 @@ android:padding="16dp">
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
+            <Button
+                android:id="@+id/button_spherical_tank"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Сферическая ёмкость" />
+
+            <Button
+                android:id="@+id/button_vertical_arc_bottom"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Вертикальное дуговое днище" />
+
+            <Button
+                android:id="@+id/button_single_cone_tank"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Вертикальное конусное днище" />
+
         </LinearLayout>
     </ScrollView>
 </ViewFlipper>

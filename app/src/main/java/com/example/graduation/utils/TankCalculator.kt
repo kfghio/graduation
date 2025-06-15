@@ -125,7 +125,7 @@ object TankCalculator {
         return rows
     }
 
-    /* ──────────────── Цилиндр с дуглыми (arc) днищами ────────────────── */
+    /* ──────────────── Цилиндр + два дуговых днища (точный объём) ─────────────── */
     fun generateArcEndedCylindricalTable(
         lengthMm: Double,
         diameterMm: Double,
@@ -133,36 +133,42 @@ object TankCalculator {
         stepMm: Double,
         density: Double
     ): List<TableRow> {
-        val r = diameterMm / 2000.0
-        val lengthM = lengthMm / 1000.0
-        val cylinderFull = Math.PI * r * r * lengthM
-        val arcEndVol = calculateArcEndVolume(diameterMm, endHeightMm)
-        val fullVolM3 = cylinderFull + 2 * arcEndVol
+
+        val R = diameterMm / 2.0 / 1000.0
+        val f = endHeightMm / 1000.0
+        val L = lengthMm / 1000.0
+        val stepM = stepMm / 1000.0
+        val H = 2 * R
+
+        val planeX = -R + f
+
+        val headFull = volumeUpTo(R, R, planeX)
+
+        val cylFull = Math.PI * R * R * L
+
+        val fullVol = cylFull + 2 * headFull
 
         val rows = mutableListOf<TableRow>()
-        var h = 0.0
-        while (h <= diameterMm + 1e-6) {
-            val levelCm = h / 10.0
-            val hM = h / 1000.0
-            val cylVol = calculateHorizontalCylinderVolume(r, lengthM, hM)
-            val arcPart = 2 * arcEndVol * (h / diameterMm)
-            val volumeM3 = cylVol + arcPart
-            val percentage = volumeM3 / fullVolM3 * 100.0
-            val massT = volumeM3 * density
-            rows += TableRow(levelCm, percentage, volumeM3, massT)
-            h += stepMm
+        var level = 0.0
+
+        while (level <= H + 1e-9) {
+
+            val cylPart = calculateHorizontalCylinderVolume(R, L, level)
+
+            val z= -R + level
+            val headPart = volumeUpTo(z, R, planeX)
+
+            val volM3   = cylPart + 2 * headPart
+            val massT   = volM3 * density
+            val percent = volM3 / fullVol * 100.0
+
+            rows += TableRow(level * 100.0, percent, volM3, massT)
+            level += stepM
         }
         return rows
     }
 
-    private fun calculateArcEndVolume(diameterMm: Double, heightMm: Double): Double {
-        val R = diameterMm / 2.0 / 1000.0
-        val h = heightMm / 1000.0
-        if (h <= 0 || h >= 2 * R) return 0.0
-        val theta = 2 * acos((R - h) / R)
-        val segmentArea = (R * R / 2) * (theta - sin(theta))
-        return segmentArea * (diameterMm / 1000.0)
-    }
+
 
     /* ──────────────── Цилиндр с коническими днищами ──────────────────── */
     fun generateConicalEndedCylindricalTable(
@@ -172,25 +178,31 @@ object TankCalculator {
         stepMm: Double,
         density: Double
     ): List<TableRow> {
-        val r = diameterMm / 2000.0
-        val lengthM = lengthMm / 1000.0
-        val cylinderFull = Math.PI * r * r * lengthM
-        val endH = endHeightMm / 1000.0
-        val coneVol = (1.0 / 3.0) * Math.PI * r * r * endH
-        val fullVolM3 = cylinderFull + 2 * coneVol
+
+        val R = diameterMm / 2.0 / 1000.0
+        val Hc = endHeightMm / 1000.0
+        val L = lengthMm / 1000.0
+        val stepM = stepMm / 1000.0
+        val H = 2 * R
+
+        val cylFull  = Math.PI * R * R * L
+        val coneFull = Math.PI * R * R * Hc / 3.0
+        val fullVol  = cylFull + 2 * coneFull
 
         val rows = mutableListOf<TableRow>()
-        var h = 0.0
-        while (h <= diameterMm + 1e-6) {
-            val levelCm = h / 10.0
-            val hM = h / 1000.0
-            val cylVol = calculateHorizontalCylinderVolume(r, lengthM, hM)
-            val conePart = 2 * coneVol * (h / diameterMm)
-            val volumeM3 = cylVol + conePart
-            val percentage = volumeM3 / fullVolM3 * 100.0
-            val massT = volumeM3 * density
-            rows += TableRow(levelCm, percentage, volumeM3, massT)
-            h += stepMm
+        var level = 0.0
+        while (level <= H + 1e-9) {
+
+            val cylPart = calculateHorizontalCylinderVolume(R, L, level)
+
+            val conePartOne = partialFrustumVolume(r1 = R, r2 = 0.0, hCone = Hc, fillH = level)
+
+            val volM3   = cylPart + 2 * conePartOne
+            val massT   = volM3 * density
+            val percent = volM3 / fullVol * 100.0
+
+            rows += TableRow(level * 100.0, percent, volM3, massT)
+            level += stepM
         }
         return rows
     }
@@ -598,7 +610,7 @@ object TankCalculator {
     }
 
     /* ───────── Вертикальная прямоугольная ёмкость с усечённо-пирамидальным днищем ───────── */
-    fun generateRectFrustumBottomTable(
+    fun generateVerticalRectFrustumTable(
         heightMm: Double,
         bigAMm: Double,
         bigBMm: Double,
@@ -621,7 +633,7 @@ object TankCalculator {
         val p = (A1 - a2) / f
         val q = (B1 - b2) / f
 
-        val frustFullVol = pyramidPartialVolume(f, a2, b2, q, p)
+        val frustFullVol = pyramidPartialVerticalRectFrustumVolume(f, a2, b2, q, p)
         val rectArea = A1 * B1
         val fullVolume = frustFullVol + rectArea * hC
 
@@ -630,11 +642,11 @@ object TankCalculator {
         while (h <= H + 1e-9) {
 
             val volM3 = if (h <= f)
-                pyramidPartialVolume(h, a2, b2, q, p)
+                pyramidPartialVerticalRectFrustumVolume(h, a2, b2, q, p)
             else
                 frustFullVol + rectArea * (h - f)
 
-            val massT   = volM3 * density
+            val massT = volM3 * density
             val levelCm = h * 100.0
             val percent = volM3 / fullVolume * 100.0
 
@@ -644,12 +656,125 @@ object TankCalculator {
         return rows
     }
 
-    private fun pyramidPartialVolume(t: Double, a2: Double, b2: Double, q: Double, p: Double): Double {
+    private fun pyramidPartialVerticalRectFrustumVolume(t: Double, a2: Double, b2: Double, q: Double, p: Double): Double {
         if (t <= 0.0) return 0.0
         val t2 = t * t
         val t3 = t2 * t
         return a2 * b2 * t + (a2 * q + b2 * p) * t2 / 2.0 + p * q * t3 / 3.0
     }
 
+    /* ───────── Сферическая ёмкость ───────── */
+    fun generateSphereTable(
+        diameterMm: Double,
+        stepMm: Double,
+        density: Double
+    ): List<TableRow> {
+
+        val R = diameterMm / 2.0 / 1000.0
+        val stepM = stepMm / 1000.0
+        val fullVol = 4.0 / 3.0 * Math.PI * R * R * R
+
+        val rows = mutableListOf<TableRow>()
+        var h = 0.0
+        val H = 2 * R
+
+        while (h <= H + 1e-9) {
+
+            val volM3 = Math.PI * h * h * (3 * R - h) / 3.0
+            val massT = volM3 * density
+
+            val levelCm = h * 100.0
+            val percent = volM3 / fullVol * 100.0
+
+            rows.add(TableRow(levelCm, percent, volM3, massT))
+            h += stepM
+        }
+        return rows
+    }
+
+    /* ───────── Вертикальное дуговое днище ───────── */
+    fun generateSingleArcTankTable(
+        diameterMm: Double,
+        capHeightMm: Double,
+        stepMm: Double,
+        density: Double
+    ): List<TableRow> {
+
+        val R  = diameterMm / 2.0 / 1000.0
+        val f  = capHeightMm / 1000.0
+        val H  = 2 * R
+        val stepM = stepMm / 1000.0
+        val planeX = -R + f
+
+        val fullVol = volumeUpTo(R, R, planeX)
+
+        val rows = mutableListOf<TableRow>()
+        var level = 0.0
+        while (level <= H + 1e-9) {
+            val z = -R + level
+            val volM3 = volumeUpTo(z, R, planeX)
+            val massT = volM3 * density
+            rows += TableRow(
+                levelCm = level * 100.0,
+                percentage = volM3 / fullVol * 100.0,
+                volumeM3 = volM3,
+                massT = massT
+            )
+            level += stepM
+        }
+        return rows
+    }
+
+    private fun circleCapAreaLeft(r: Double, planeX: Double): Double = when {
+        planeX <= -r -> 0.0
+        planeX >=  r -> Math.PI * r * r
+        else -> {
+            val d = planeX
+            val areaRight = r * r * acos(d / r) - d * sqrt(r * r - d * d)
+            Math.PI * r * r - areaRight
+        }
+    }
+
+    private fun volumeUpTo(z: Double, R: Double, planeX: Double, slices: Int = 800): Double {
+        val dz = (z + R) / slices
+        var v = 0.0
+        for (i in 0 until slices) {
+            val yMid = -R + dz * (i + 0.5)
+            val r = sqrt(R * R - yMid * yMid)
+            v += circleCapAreaLeft(r, planeX) * dz
+        }
+        return v
+    }
+
+    /* ───────── Горизонтальная ёмкость = одно коническое днище ───────── */
+    fun generateSingleConeTankTable(
+        diameterMm: Double,
+        coneHeightMm: Double,
+        stepMm: Double,
+        density: Double
+    ): List<TableRow> {
+
+        require(diameterMm > 0 && coneHeightMm > 0 && stepMm > 0)
+        require(coneHeightMm <= diameterMm / 2) { "f не может быть больше D / 2" }
+
+        val R = diameterMm / 2.0 / 1000.0
+        val Hc = coneHeightMm / 1000.0
+        val H = 2 * R
+        val stepM  = stepMm / 1000.0
+        val fullVol = Math.PI * R * R * Hc / 3.0
+
+        val rows = mutableListOf<TableRow>()
+        var level = 0.0
+        while (level <= H + 1e-9) {
+
+            val volM3   = partialFrustumVolume(R,r2 = 0.0, Hc, level)
+            val massT   = volM3 * density
+            val percent = volM3 / fullVol * 100.0
+
+            rows += TableRow(levelCm = level * 100.0, percentage = percent, volumeM3 = volM3, massT = massT)
+            level += stepM
+        }
+        return rows
+    }
 
 }
