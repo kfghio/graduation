@@ -134,7 +134,7 @@ android:padding="16dp">
         </LinearLayout>
     </ScrollView>
 
-    <!-- Прочее -->
+    <!-- Прочие -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent">

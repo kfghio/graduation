@@ -5,18 +5,25 @@
     android:layout_height="match_parent"
     android:padding="16dp">
 
+    <ImageView
+        android:id="@+id/img_scheme"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:adjustViewBounds="true"
+        android:src="@drawable/ceged" />
+
     <EditText
         android:id="@+id/edit_text_length"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Длина (мм)"
+        android:hint="Длина (L, мм)"
         android:inputType="numberDecimal"/>
 
     <EditText
         android:id="@+id/edit_text_diameter"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Диаметр (мм)"
+        android:hint="Диаметр (D, мм)"
         android:inputType="numberDecimal"
         android:layout_marginTop="8dp"/>
 
@@ -24,7 +31,7 @@
         android:id="@+id/edit_text_head_height"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Высота днища (мм)"
+        android:hint="Высота днища (f, мм)"
         android:inputType="numberDecimal"
         android:layout_marginTop="8dp"/>
 
@@ -32,7 +39,7 @@
         android:id="@+id/edit_text_step"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Шаг (мм)"
+        android:hint="Шаг (h, мм)"
         android:inputType="numberDecimal"
         android:layout_marginTop="8dp"/>
 

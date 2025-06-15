@@ -5,33 +5,43 @@
     android:orientation="vertical"
     android:padding="16dp">
 
+    <ImageView
+        android:id="@+id/img_scheme"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:adjustViewBounds="true"
+        android:src="@drawable/eegpd" />
+
     <EditText
         android:id="@+id/edit_text_length"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Длина (мм)"
+        android:hint="Длина (L, мм)"
         android:inputType="numberDecimal" />
 
     <EditText
         android:id="@+id/edit_text_height"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Высота (мм)"
-        android:inputType="numberDecimal" />
+        android:hint="Высота (H, мм)"
+        android:inputType="numberDecimal"
+        android:layout_marginTop="8dp"/>
 
     <EditText
         android:id="@+id/edit_text_axis"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Ось (мм)"
-        android:inputType="numberDecimal" />
+        android:hint="Ось (a, мм)"
+        android:inputType="numberDecimal"
+        android:layout_marginTop="8dp"/>
 
     <EditText
         android:id="@+id/edit_text_step"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Шаг (мм)"
-        android:inputType="numberDecimal" />
+        android:hint="Шаг (h, мм)"
+        android:inputType="numberDecimal"
+        android:layout_marginTop="8dp"/>
 
     <Spinner
         android:id="@+id/spinner_liquid"

@@ -164,7 +164,7 @@ class MainActivity : AppCompatActivity() {
                 flipper.displayedChild = 1
             }
             Section.OTHER -> {
-                titleView.text = "Прочее"
+                titleView.text = "Прочие"
                 flipper.displayedChild = 2
             }
         }
@@ -256,7 +256,7 @@ class MainActivity : AppCompatActivity() {
     } // проверить
 
     private fun showHemisphericalInputDialog() {
-        val dialogView = layoutInflater.inflate(R.layout.dialog_cylindrical_input, null)
+        val dialogView = layoutInflater.inflate(R.layout.dialog_himespherical_input, null)
         val editTextLength = dialogView.findViewById<EditText>(R.id.edit_text_length)
         val editTextDiameter = dialogView.findViewById<EditText>(R.id.edit_text_diameter)
         val editTextStep = dialogView.findViewById<EditText>(R.id.edit_text_step)
@@ -291,7 +291,7 @@ class MainActivity : AppCompatActivity() {
     } // проверить
 
     private fun showArcTankInputDialog() {
-        val dialogView = layoutInflater.inflate(R.layout.dialog_cylindrical_elliptical_input, null)
+        val dialogView = layoutInflater.inflate(R.layout.dialog_arcs_input, null)
         val editTextLength = dialogView.findViewById<EditText>(R.id.edit_text_length)
         val editTextDiameter = dialogView.findViewById<EditText>(R.id.edit_text_diameter)
         val editTextEndHeight = dialogView.findViewById<EditText>(R.id.edit_text_head_height)
@@ -331,7 +331,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showConicalTankInputDialog() {
-        val dialogView = layoutInflater.inflate(R.layout.dialog_cylindrical_elliptical_input, null)
+        val dialogView = layoutInflater.inflate(R.layout.dialog_cons_input, null)
         val editTextLength = dialogView.findViewById<EditText>(R.id.edit_text_length)
         val editTextDiameter = dialogView.findViewById<EditText>(R.id.edit_text_diameter)
         val editTextEndHeight = dialogView.findViewById<EditText>(R.id.edit_text_head_height)
@@ -592,7 +592,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showSuitcaseInputDialog() {
-        val v = layoutInflater.inflate(R.layout.dialog_rounded_rect_input, null)
+        val v = layoutInflater.inflate(R.layout.dialog_suitcase_input, null)
 
         val etL   = v.findViewById<EditText>(R.id.edit_text_length)
         val etH1  = v.findViewById<EditText>(R.id.edit_text_height1)

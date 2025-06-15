@@ -10,57 +10,33 @@
         android:layout_width="match_parent"
         android:layout_height="200dp"
         android:adjustViewBounds="true"
-        android:src="@drawable/pevpupd" />
+        android:src="@drawable/cegkd" />
 
     <EditText
-        android:id="@+id/et_height"
+        android:id="@+id/edit_text_length"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Высота (H, мм)"
+        android:hint="Длина (L, мм)"
         android:inputType="numberDecimal"/>
 
     <EditText
-        android:id="@+id/et_bigA"
+        android:id="@+id/edit_text_diameter"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Ширина (A1, мм)"
+        android:hint="Диаметр (D, мм)"
         android:inputType="numberDecimal"
         android:layout_marginTop="8dp"/>
 
     <EditText
-        android:id="@+id/et_bigB"
+        android:id="@+id/edit_text_head_height"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Глубина (B1, мм)"
+        android:hint="Высота днища (f, мм)"
         android:inputType="numberDecimal"
         android:layout_marginTop="8dp"/>
 
     <EditText
-        android:id="@+id/et_smallA"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Ширина (a2, мм)"
-        android:inputType="numberDecimal"
-        android:layout_marginTop="8dp"/>
-
-    <EditText
-        android:id="@+id/et_smallB"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Глубина (b2, мм)"
-        android:inputType="numberDecimal"
-        android:layout_marginTop="8dp"/>
-
-    <EditText
-        android:id="@+id/et_frustum"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Высота (f, мм)"
-        android:inputType="numberDecimal"
-        android:layout_marginTop="8dp"/>
-
-    <EditText
-        android:id="@+id/et_step"
+        android:id="@+id/edit_text_step"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="Шаг (h, мм)"
@@ -71,5 +47,5 @@
         android:id="@+id/spinner_liquid"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"/>
+        android:layout_marginTop="12dp" />
 </LinearLayout>

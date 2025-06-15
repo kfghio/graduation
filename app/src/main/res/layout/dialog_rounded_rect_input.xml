@@ -5,6 +5,13 @@
     android:orientation="vertical"
     android:padding="16dp">
 
+    <ImageView
+        android:id="@+id/img_scheme"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:adjustViewBounds="true"
+        android:src="@drawable/poegpd" />
+
     <EditText
         android:id="@+id/edit_text_length"
         android:layout_width="match_parent"
