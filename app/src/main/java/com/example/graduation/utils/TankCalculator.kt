@@ -185,9 +185,9 @@ object TankCalculator {
         val stepM = stepMm / 1000.0
         val H = 2 * R
 
-        val cylFull  = Math.PI * R * R * L
+        val cylFull = Math.PI * R * R * L
         val coneFull = Math.PI * R * R * Hc / 3.0
-        val fullVol  = cylFull + 2 * coneFull
+        val fullVol = cylFull + 2 * coneFull
 
         val rows = mutableListOf<TableRow>()
         var level = 0.0
@@ -197,8 +197,8 @@ object TankCalculator {
 
             val conePartOne = partialFrustumVolume(r1 = R, r2 = 0.0, hCone = Hc, fillH = level)
 
-            val volM3   = cylPart + 2 * conePartOne
-            val massT   = volM3 * density
+            val volM3 = cylPart + 2 * conePartOne
+            val massT = volM3 * density
             val percent = volM3 / fullVol * 100.0
 
             rows += TableRow(level * 100.0, percent, volM3, massT)
@@ -224,7 +224,7 @@ object TankCalculator {
 
         val vCylFull  = Math.PI * r1 * r1 * cylLenM
         val vConeFull = Math.PI * hCone / 3.0 * (r1 * r1 + r1 * r2 + r2 * r2)
-        val vFull     = vCylFull + 2 * vConeFull
+        val vFull = vCylFull + 2 * vConeFull
 
         val rows = mutableListOf<TableRow>()
         var hMm = 0.0
@@ -253,6 +253,7 @@ object TankCalculator {
         if (fillH >= 2 * r1 - 1e-9) {
             return Math.PI * hCone / 3.0 * (r1 * r1 + r1 * r2 + r2 * r2)
         }
+
         if (fillH <= 0) return 0.0
 
         val dx = hCone / slices
@@ -275,9 +276,9 @@ object TankCalculator {
     }
 
     private fun circularSegmentArea(r: Double, h: Double): Double = when {
-        h <= 0      -> 0.0
-        h >= 2 * r  -> Math.PI * r * r
-        else        -> {
+        h <= 0 -> 0.0
+        h >= 2 * r -> Math.PI * r * r
+        else -> {
             val theta = 2 * acos((r - h) / r)
             0.5 * r * r * (theta - sin(theta))
         }
@@ -364,69 +365,60 @@ object TankCalculator {
         return a * b * (asin(t) + Math.PI / 2 + t * sqrt(1 - t * t))
     }
 
-    /* ──────────────── Горизонтальная прямоугольно-округлая ёмкость (плоские днища) ──────────────── */
+    /* ───── Горизонтальная прямоугольно-округлая ёмкость (плоские днища) ───── */
     fun generateRoundedRectTable(
         lengthMm: Double,
         height1Mm: Double,
         height2Mm: Double,
-        widthMm: Double,
-        stepMm: Double,
-        density: Double
+        widthMm : Double,
+        stepMm  : Double,
+        density : Double
     ): List<TableRow> {
 
-        val r = (height1Mm - height2Mm) / 2
-
-        val R = r / 1000.0
         val H1 = height1Mm / 1000.0
         val H2 = height2Mm / 1000.0
-        val B = widthMm / 1000.0
+        val R = (H1 - H2) / 2.0
+        val B = widthMm  / 1000.0
         val L = lengthMm / 1000.0
-        val stepM = stepMm / 1000.0
-        val centerW  = B - 2 * R
+        val step = stepMm / 1000.0
+        val centerW = B - 2 * R
 
-
-        val fullArea = crossSectionArea(H1, R, centerW, H2, B)
-        val fullVol = fullArea * L
+        val fullArea = crossSectionRoundedRectArea(H1, R, centerW, H2, B)
+        val fullVol  = fullArea * L
 
         val rows = mutableListOf<TableRow>()
         var h = 0.0
         while (h <= H1 + 1e-9) {
-            val area = crossSectionArea(h, R, centerW, H2, B)
+            val area = crossSectionRoundedRectArea(h, R, centerW, H2, B)
             val vol = area * L
-            val mass = vol * density
-
             val levelCm = h * 100.0
-            val percentage = vol / fullVol * 100.0
+            val percent = vol / fullVol * 100.0
             val volumeM3 = vol
-            val massT = mass
-
-            rows.add(TableRow(levelCm, percentage, volumeM3, massT))
-            h += stepM
+            val massT = vol * density
+            rows.add (TableRow(levelCm, percent, volumeM3, massT))
+            h += step
         }
         return rows
     }
 
-    private fun circularRecSegmentArea(h: Double, rR: Double): Double = when {
-        h <= 0.0 -> 0.0
-        h >= 2 * rR -> Math.PI * rR * rR
-        else -> rR * rR * acos((rR - h) / rR) - (rR - h) * sqrt(2 * rR * h - h * h)
+    private fun crossSectionRoundedRectArea(h: Double, R: Double, centerW: Double, H2: Double, B: Double,  slices: Int = 1000 ): Double {
+        val dy = h / slices
+        var s = 0.0
+        for (i in 0 until slices) {
+            val y = (i + 0.5) * dy
+            val w = when {
+                y <  R -> centerW + 2.0 * sqrt(R*R - (R - y)*(R - y))
+                y <= R + H2 -> B
+                else -> {
+                    val y2 = y - (R + H2)
+                    centerW + 2.0 * sqrt(R*R - y2*y2)
+                }
+            }
+            s += w * dy
+        }
+        return s
     }
 
-    private fun crossSectionArea(h: Double, r: Double, centerW: Double, hH2: Double, bB: Double): Double {
-        val h1 = min(h, r)
-        var area = centerW * h1 + 2 * circularRecSegmentArea(h1, r)
-
-        if (h <= r) return area
-
-        val h2 = min(h - r, hH2)
-        area += bB * h2
-        if (h <= r + hH2) return area
-
-        val h3 = h - (r + hH2)
-        area += 2 * circularRecSegmentArea(h3, r)
-
-        return area
-    }
 
     /* ──────────────── Чемоданная емкость с плоскими днищами ──────────────── */
     fun generateSuitcaseTable(
