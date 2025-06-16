@@ -33,68 +33,89 @@ android:padding="16dp">
 
             <Button
                 android:id="@+id/button_cylindrical_tank"
+                style="@style/RaisedWhiteButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Цилиндрическая ёмкость горизонтальная с плоскими днищами" />
 
             <Button
                 android:id="@+id/button_elliptical_tank"
+                style="@style/RaisedWhiteButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Цилиндрическая емкость горизонтальная с эллиптическими днищами" />
+                android:text="Цилиндрическая емкость горизонтальная с эллиптическими днищами"
+                android:layout_marginTop="5dp"/>
 
             <Button
                 android:id="@+id/button_hemispherical_tank"
+                style="@style/RaisedWhiteButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Цилиндрическая емкость горизонтальная с полусферическими днищами" />
+                android:text="Цилиндрическая емкость горизонтальная с полусферическими днищами"
+                android:layout_marginTop="5dp"/>
 
             <Button
                 android:id="@+id/button_arc_tank"
+                style="@style/RaisedWhiteButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Цилиндрическая емкость горизонтальная с дуговыми днищами" />
+                android:text="Цилиндрическая емкость горизонтальная с дуговыми днищами"
+                android:layout_marginTop="5dp"/>
 
             <Button
                 android:id="@+id/button_conical_tank"
+                style="@style/RaisedWhiteButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Цилиндрическая емкость горизонтальная с конусными днищами" />
+                android:text="Цилиндрическая емкость горизонтальная с конусными днищами"
+                android:layout_marginTop="5dp"/>
 
             <Button
                 android:id="@+id/button_frustrum_conical_tank"
+                style="@style/RaisedWhiteButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Цилиндрическая емкость горизонтальная с усеченно-конусными днищами" />
+                android:text="Цилиндрическая емкость горизонтальная с усеченно-конусными днищами"
+                android:layout_marginTop="5dp"/>
 
             <Button
                 android:id="@+id/button_rectangular_tank"
+                style="@style/RaisedWhiteButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Прямоугольная емкость горизонтальная с плоскими днищами" />
+                android:text="Прямоугольная емкость горизонтальная с плоскими днищами"
+                android:layout_marginTop="5dp"/>
 
             <Button
                 android:id="@+id/button_elliptical_horizontal_tank"
-                android:layout_width="wrap_content"
+                style="@style/RaisedWhiteButton"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Эллиптическая горизонтальная ёмкость с плоскими днищами" />
+                android:text="Эллиптическая горизонтальная ёмкость с плоскими днищами"
+                android:layout_marginTop="5dp"/>
             <Button
                 android:id="@+id/button_elliptical_truncated_tank"
-                android:layout_width="wrap_content"
+                style="@style/RaisedWhiteButton"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Эллиптическо-усеченная емкость горизонтальная с плоскими днищами" />
+                android:text="Эллиптическо-усеченная емкость горизонтальная с плоскими днищами"
+                android:layout_marginTop="5dp"/>
 
             <Button
                 android:id="@+id/button_rounded_rect_tank"
-                android:layout_width="wrap_content"
+                style="@style/RaisedWhiteButton"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Прямоугольно-округлая емкость горизонтальная с плоскими днищами" />
+                android:text="Прямоугольно-округлая емкость горизонтальная с плоскими днищами"
+                android:layout_marginTop="5dp"/>
 
             <Button
                 android:id="@+id/button_suitcase_tank"
-                android:layout_width="wrap_content"
+                style="@style/RaisedWhiteButton"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Чемоданная емкость горизонтальная с плоскими днищами" />
+                android:text="Чемоданная емкость горизонтальная с плоскими днищами"
+                android:layout_marginTop="5dp"/>
         </LinearLayout>
     </ScrollView>
 
@@ -110,27 +131,34 @@ android:padding="16dp">
 
             <Button
                 android:id="@+id/button_vertical_cylindrical_tank"
+                style="@style/RaisedWhiteButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Цилиндрическая ёмкость вертикальная с плоскими днищами"/>
 
             <Button
                 android:id="@+id/button_vertical_frustum_tank"
+                style="@style/RaisedWhiteButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Цилиндрическая емкость вертикальная с плоским и усеченно-конусным днищем" />
+                android:text="Цилиндрическая емкость вертикальная с плоским и усеченно-конусным днищем"
+                android:layout_marginTop="5dp"/>
 
             <Button
                 android:id="@+id/button_vertical_wine_tank"
+                style="@style/RaisedWhiteButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Винная емкость вертикальная с плоскими днищами" />
+                android:text="Винная емкость вертикальная с плоскими днищами"
+                android:layout_marginTop="5dp"/>
 
             <Button
                 android:id="@+id/button_vertical_rect_frustum_tank"
+                style="@style/RaisedWhiteButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Прямоугольная емкость вертикальная с плоским и усеченно-пирамидальным днищем" />
+                android:text="Прямоугольная емкость вертикальная с плоским и усеченно-пирамидальным днищем"
+                android:layout_marginTop="5dp"/>
         </LinearLayout>
     </ScrollView>
 
@@ -146,21 +174,26 @@ android:padding="16dp">
 
             <Button
                 android:id="@+id/button_spherical_tank"
+                style="@style/RaisedWhiteButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Сферическая ёмкость" />
 
             <Button
                 android:id="@+id/button_vertical_arc_bottom"
+                style="@style/RaisedWhiteButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Вертикальное дуговое днище" />
+                android:text="Вертикальное дуговое днище"
+                android:layout_marginTop="5dp"/>
 
             <Button
                 android:id="@+id/button_single_cone_tank"
+                style="@style/RaisedWhiteButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Вертикальное конусное днище" />
+                android:text="Вертикальное конусное днище"
+                android:layout_marginTop="5dp"/>
 
         </LinearLayout>
     </ScrollView>

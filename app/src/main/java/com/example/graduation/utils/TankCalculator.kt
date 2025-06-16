@@ -313,7 +313,7 @@ object TankCalculator {
         return rows
     }
 
-    /* ──────── Эллипс с симметричным двойным срезом ─────── */
+    /* ──────────────── Эллипс с симметричным двойным срезом ──────────────── */
     fun generateEllipticalDoubleTruncatedTable(
         lengthMm: Double,
         heightMm: Double,
@@ -364,7 +364,7 @@ object TankCalculator {
         return a * b * (asin(t) + Math.PI / 2 + t * sqrt(1 - t * t))
     }
 
-    /* ──────── Горизонтальная прямоугольно-округлая ёмкость (плоские днища) ─────── */
+    /* ──────────────── Горизонтальная прямоугольно-округлая ёмкость (плоские днища) ──────────────── */
     fun generateRoundedRectTable(
         lengthMm: Double,
         height1Mm: Double,
@@ -428,7 +428,7 @@ object TankCalculator {
         return area
     }
 
-    /* ──────── Чемоданная емкость с плоскими днищами ─────── */
+    /* ──────────────── Чемоданная емкость с плоскими днищами ──────────────── */
     fun generateSuitcaseTable(
         lengthMm: Double,
         height1Mm: Double,
@@ -492,7 +492,7 @@ object TankCalculator {
         return a * b * (asin(t) + Math.PI / 2.0 + t * sqrt(1 - t * t))
     }
 
-    /* ───────── Вертикальная цилиндрическая ёмкость с плоскими днищами ───────── */
+    /* ──────────────── Вертикальная цилиндрическая ёмкость с плоскими днищами ──────────────── */
     fun generateVerticalCylindricalTable(
         heightMm: Double,
         diameterMm: Double,
@@ -519,7 +519,7 @@ object TankCalculator {
         return rows
     }
 
-    /* ───────── Вертикальная цилиндрическая ёмкость с усечённо-конусным днищем ─────── */
+    /* ──────────────── Вертикальная цилиндрическая ёмкость с усечённо-конусным днищем ──────────────── */
     fun generateVerticalFrustumBottomTable(
         heightMm: Double,
         bigDiamMm: Double,
@@ -568,7 +568,7 @@ object TankCalculator {
         return Math.PI * t / 3.0 * (r2 * r2 + r2 * rt + rt * rt)
     }
 
-    /* ───────── Винная емкость вертикальная с плоскими днищами ─────── */
+    /* ──────────────── Винная емкость вертикальная с плоскими днищами ──────────────── */
     fun generateWineBarrelTable(
         heightMm: Double,
         bigDiamMm: Double,
@@ -609,7 +609,7 @@ object TankCalculator {
         return term1 + term2 + term3 + term4
     }
 
-    /* ───────── Вертикальная прямоугольная ёмкость с усечённо-пирамидальным днищем ───────── */
+    /* ──────────────── Вертикальная прямоугольная ёмкость с усечённо-пирамидальным днищем ──────────────── */
     fun generateVerticalRectFrustumTable(
         heightMm: Double,
         bigAMm: Double,
@@ -663,7 +663,7 @@ object TankCalculator {
         return a2 * b2 * t + (a2 * q + b2 * p) * t2 / 2.0 + p * q * t3 / 3.0
     }
 
-    /* ───────── Сферическая ёмкость ───────── */
+    /* ──────────────── Сферическая ёмкость ──────────────── */
     fun generateSphereTable(
         diameterMm: Double,
         stepMm: Double,
@@ -692,7 +692,7 @@ object TankCalculator {
         return rows
     }
 
-    /* ───────── Вертикальное дуговое днище ───────── */
+    /* ──────────────── Вертикальное дуговое днище ──────────────── */
     fun generateSingleArcTankTable(
         diameterMm: Double,
         capHeightMm: Double,
@@ -727,7 +727,7 @@ object TankCalculator {
 
     private fun circleCapAreaLeft(r: Double, planeX: Double): Double = when {
         planeX <= -r -> 0.0
-        planeX >=  r -> Math.PI * r * r
+        planeX >= r -> Math.PI * r * r
         else -> {
             val d = planeX
             val areaRight = r * r * acos(d / r) - d * sqrt(r * r - d * d)
@@ -746,7 +746,7 @@ object TankCalculator {
         return v
     }
 
-    /* ───────── Горизонтальная ёмкость = одно коническое днище ───────── */
+    /* ──────────────── Горизонтальная ёмкость одно коническое днище ──────────────── */
     fun generateSingleConeTankTable(
         diameterMm: Double,
         coneHeightMm: Double,
@@ -754,21 +754,18 @@ object TankCalculator {
         density: Double
     ): List<TableRow> {
 
-        require(diameterMm > 0 && coneHeightMm > 0 && stepMm > 0)
-        require(coneHeightMm <= diameterMm / 2) { "f не может быть больше D / 2" }
-
         val R = diameterMm / 2.0 / 1000.0
         val Hc = coneHeightMm / 1000.0
         val H = 2 * R
-        val stepM  = stepMm / 1000.0
+        val stepM = stepMm / 1000.0
         val fullVol = Math.PI * R * R * Hc / 3.0
 
         val rows = mutableListOf<TableRow>()
         var level = 0.0
         while (level <= H + 1e-9) {
 
-            val volM3   = partialFrustumVolume(R,r2 = 0.0, Hc, level)
-            val massT   = volM3 * density
+            val volM3 = partialFrustumVolume(R,r2 = 0.0, Hc, level)
+            val massT = volM3 * density
             val percent = volM3 / fullVol * 100.0
 
             rows += TableRow(levelCm = level * 100.0, percentage = percent, volumeM3 = volM3, massT = massT)
