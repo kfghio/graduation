@@ -6,17 +6,15 @@ import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.example.graduation.R
-import com.example.graduation.models.Liquid
 import com.example.graduation.models.LiquidRepository
+import com.example.graduation.utils.*
 
 class MainActivity : AppCompatActivity() {
 
-    private val liquids = LiquidRepository.list
-
-    private enum class Section { HORIZONTAL, VERTICAL, OTHER }
     private var currentSection = Section.HORIZONTAL
     private lateinit var titleView: TextView
     private lateinit var flipper: ViewFlipper
+    private val liquids = LiquidRepository.list
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -96,46 +94,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun prevSection() {
-        currentSection = when (currentSection) {
-            Section.HORIZONTAL -> Section.OTHER
-            Section.VERTICAL   -> Section.HORIZONTAL
-            Section.OTHER      -> Section.VERTICAL
-        }
+        currentSection = currentSection.prev()
         showSection()
     }
 
     private fun nextSection() {
-        currentSection = when (currentSection) {
-            Section.HORIZONTAL -> Section.VERTICAL
-            Section.VERTICAL   -> Section.OTHER
-            Section.OTHER      -> Section.HORIZONTAL
-        }
+        currentSection = currentSection.next()
         showSection()
     }
 
-    private fun showSection() = when (currentSection) {
-        Section.HORIZONTAL -> { titleView.text = "Горизонтальные ёмкости"; flipper.displayedChild = 0 }
-        Section.VERTICAL   -> { titleView.text = "Вертикальные ёмкости";   flipper.displayedChild = 1 }
-        Section.OTHER      -> { titleView.text = "Прочие";                 flipper.displayedChild = 2 }
-    }
-
-    private fun showError(msg: String) =
-        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
-
-    private fun launchTable(shape: String, vararg extras: Pair<String, Double>) {
-        Intent(this, TableActivity::class.java).apply {
-            putExtra("shape", shape)
-            extras.forEach { putExtra(it.first, it.second) }
-            startActivity(this)
-        }
-    }
-
-    private fun Spinner.bindLiquids() = run {
-        adapter = ArrayAdapter(
-            this@MainActivity,
-            android.R.layout.simple_spinner_item,
-            liquids.map { it.name }
-        ).apply { setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
+    private fun showSection() {
+        findViewById<TextView>(R.id.text_section_title).text = currentSection.title()
+        findViewById<ViewFlipper>(R.id.view_flipper).displayedChild = currentSection.pageIndex()
     }
 
     /* ────────────────────────── 1. Прямоугольная (гор.) ────────────────────────── */
@@ -145,7 +115,7 @@ class MainActivity : AppCompatActivity() {
         val etB = v.findViewById<EditText>(R.id.edit_text_width)
         val etH = v.findViewById<EditText>(R.id.edit_text_height)
         val etSt = v.findViewById<EditText>(R.id.edit_text_step)
-        val sp = v.findViewById<Spinner>(R.id.spinner_liquid).apply { bindLiquids() }
+        val sp = v.findViewById<Spinner>(R.id.spinner_liquid).apply { bindLiquids(liquids, this@MainActivity) }
 
         AlertDialog.Builder(this)
             .setTitle("Прямоугольная ёмкость (гор.)")
@@ -157,15 +127,19 @@ class MainActivity : AppCompatActivity() {
                 val st = etSt.text.toString().toDoubleOrNull()
                 val liq = liquids[sp.selectedItemPosition]
 
-                if (L==null||B==null||H==null||st==null|| L<=0||B<=0||H<=0||st<=0){
-                    showError("Введите корректные значения")
+                val error: String? = when {
+                    listOf(L,B,H,st).any { it==null||it<=0 } -> "Введите корректные значения"
+                    st!! > H!! -> "Шаг не должен превышать высоту"
+                    else -> validateStep(H, st)
                 }
-                else if (st > H) {
-                    showError("Шаг не должен превышать высоту")
+
+                if (error != null) {
+                    showError(error)
+                    return@setPositiveButton
                 }
-                else {
-                    launchTable("rectHor", "length" to L, "width" to B, "height" to H, "step" to st, "density" to liq.density)
-                }
+
+                launchTable("rectHor", "length" to L!!, "width" to B!!, "height" to H!!, "step" to st!!, "density" to liq.density)
+
             }
             .setNegativeButton("Отмена", null)
             .show()
@@ -177,7 +151,7 @@ class MainActivity : AppCompatActivity() {
         val etL = v.findViewById<EditText>(R.id.edit_text_length)
         val etD = v.findViewById<EditText>(R.id.edit_text_diameter)
         val etSt = v.findViewById<EditText>(R.id.edit_text_step)
-        val sp = v.findViewById<Spinner>(R.id.spinner_liquid).apply { bindLiquids() }
+        val sp = v.findViewById<Spinner>(R.id.spinner_liquid).apply { bindLiquids(liquids, this@MainActivity) }
 
         AlertDialog.Builder(this)
             .setTitle("Цилиндрическая ёмкость (гор.)")
@@ -188,21 +162,24 @@ class MainActivity : AppCompatActivity() {
                 val st = etSt.text.toString().toDoubleOrNull()
                 val liq= liquids[sp.selectedItemPosition]
 
-                if (L==null||D==null||st==null||L<=0||D<=0||st<=0) {
-                    showError("Введите корректные значения")
+                val error: String? = when {
+                    listOf(L,D,st).any { it==null||it<=0 } -> "Введите корректные значения"
+                    st!! > D!! -> "Шаг > D"
+                    else -> validateStep(D, st)
                 }
-                else if (st > D) {
-                    showError("Шаг > D")
+
+                if (error != null) {
+                    showError(error)
+                    return@setPositiveButton
                 }
-                else {
-                    launchTable(
-                        "cylHor",
-                        "length" to L,
-                        "diameter" to D,
-                        "step" to st,
-                        "density" to liq.density
-                    )
-                }
+
+                launchTable(
+                    "cylHor",
+                    "length" to L!!,
+                    "diameter" to D!!,
+                    "step" to st!!,
+                    "density" to liq.density
+                )
             }
             .setNegativeButton("Отмена", null)
             .show()
@@ -215,7 +192,7 @@ class MainActivity : AppCompatActivity() {
         val etD = v.findViewById<EditText>(R.id.edit_text_diameter)
         val etF = v.findViewById<EditText>(R.id.edit_text_head_height)
         val etSt = v.findViewById<EditText>(R.id.edit_text_step)
-        val sp = v.findViewById<Spinner>(R.id.spinner_liquid).apply { bindLiquids() }
+        val sp = v.findViewById<Spinner>(R.id.spinner_liquid).apply { bindLiquids(liquids, this@MainActivity) }
 
         AlertDialog.Builder(this)
             .setTitle("Цилиндр + эллиптические днища")
@@ -227,19 +204,26 @@ class MainActivity : AppCompatActivity() {
                 val st = etSt.text.toString().toDoubleOrNull()
                 val liq = liquids[sp.selectedItemPosition]
 
-                when {
-                    listOf(L,D,f,st).any { it==null||it<=0 } -> showError("Введите корректные значения")
-                    st!! > D!! -> showError("Шаг > D")
-                    f!! > D / 2 -> showError("f > D / 2")
-                    else -> launchTable(
-                        "ellipEndsCyl",
-                        "length" to L!!,
-                        "diameter" to D,
-                        "headH" to f,
-                        "step" to st,
-                        "density"  to liq.density
-                    )
+                val error: String? = when {
+                    listOf(L,D,f,st).any { it==null||it<=0 } -> "Введите корректные значения"
+                    st!! > D!! -> "Шаг > D"
+                    f!! > D / 2 -> "f > D / 2"
+                    else -> validateStep(D, st)
                 }
+
+                if (error != null) {
+                    showError(error)
+                    return@setPositiveButton
+                }
+
+                launchTable(
+                    "ellipEndsCyl",
+                    "length" to L!!,
+                    "diameter" to D!!,
+                    "headH" to f!!,
+                    "step" to st!!,
+                    "density" to liq.density
+                )
             }
             .setNegativeButton("Отмена", null)
             .show()
@@ -283,7 +267,7 @@ class MainActivity : AppCompatActivity() {
         val etD2 = v.findViewById<EditText>(R.id.edit_text_small_diameter)
         val etF = v.findViewById<EditText>(R.id.edit_text_head_height)
         val etSt = v.findViewById<EditText>(R.id.edit_text_step)
-        val sp = v.findViewById<Spinner>(R.id.spinner_liquid).apply { bindLiquids() }
+        val sp = v.findViewById<Spinner>(R.id.spinner_liquid).apply { bindLiquids(liquids, this@MainActivity) }
 
         AlertDialog.Builder(this)
             .setTitle("Цилиндр + усеч. конич. днища")
@@ -296,20 +280,27 @@ class MainActivity : AppCompatActivity() {
                 val st = etSt.text.toString().toDoubleOrNull()
                 val liq= liquids[sp.selectedItemPosition]
 
-                when {
-                    listOf(L,D1,D2,f,st).any { it==null||it<=0 } -> showError("Введите корректные значения")
-                    D2!! >= D1!! -> showError("D2 >= D1")
-                    st!! > D1 -> showError("Шаг > D1")
-                    else -> launchTable(
-                        "frustumEndsCyl",
-                        "length" to L!!,
-                        "bigD" to D1,
-                        "smallD" to D2,
-                        "capH" to f!!,
-                        "step" to st,
-                        "density" to liq.density
-                    )
+                val error: String? = when {
+                    listOf(L,D1,D2,f,st).any { it==null||it<=0 } -> "Введите корректные значения"
+                    D2!! >= D1!! -> "D2 >= D1"
+                    st!! > D1 -> "Шаг > D1"
+                    else -> validateStep(D1, st)
                 }
+
+                if (error != null) {
+                    showError(error)
+                    return@setPositiveButton
+                }
+
+                launchTable(
+                    "frustumEndsCyl",
+                    "length" to L!!,
+                    "bigD" to D1!!,
+                    "smallD" to D2!!,
+                    "capH" to f!!,
+                    "step" to st!!,
+                    "density" to liq.density
+                )
             }
             .setNegativeButton("Отмена", null)
             .show()
@@ -323,7 +314,7 @@ class MainActivity : AppCompatActivity() {
         val etH = v.findViewById<EditText>(R.id.edit_text_height)
         val etA = v.findViewById<EditText>(R.id.edit_text_axis)
         val etSt = v.findViewById<EditText>(R.id.edit_text_step)
-        val sp = v.findViewById<Spinner>(R.id.spinner_liquid).apply { bindLiquids() }
+        val sp = v.findViewById<Spinner>(R.id.spinner_liquid).apply { bindLiquids(liquids, this@MainActivity) }
 
         AlertDialog.Builder(this)
             .setTitle("Эллиптическая ёмкость (гор.)")
@@ -335,18 +326,25 @@ class MainActivity : AppCompatActivity() {
                 val st = etSt.text.toString().toDoubleOrNull()
                 val liq = liquids[sp.selectedItemPosition]
 
-                when {
-                    listOf(L,H,a,st).any { it==null||it<=0 } -> showError("Введите корректные значения")
-                    st!! > H!! -> showError("Шаг > H")
-                    else -> launchTable(
-                        "ellipHor",
-                        "length" to L!!,
-                        "height" to H,
-                        "axis" to a!!,
-                        "step" to st,
-                        "density" to liq.density
-                    )
+                val error: String? = when {
+                    listOf(L,H,a,st).any { it==null||it<=0 } -> "Введите корректные значения"
+                    st!! > H!! -> "Шаг > H"
+                    else -> validateStep(H, st)
                 }
+
+                if (error != null) {
+                    showError(error)
+                    return@setPositiveButton
+                }
+
+                launchTable(
+                    "ellipHor",
+                    "length" to L!!,
+                    "height" to H!!,
+                    "axis" to a!!,
+                    "step" to st!!,
+                    "density" to liq.density
+                )
             }
             .setNegativeButton("Отмена", null)
             .show()
@@ -361,7 +359,7 @@ class MainActivity : AppCompatActivity() {
         val etB = v.findViewById<EditText>(R.id.edit_text_width)
         val etA = v.findViewById<EditText>(R.id.edit_text_axis)
         val etSt = v.findViewById<EditText>(R.id.edit_text_step)
-        val sp = v.findViewById<Spinner>(R.id.spinner_liquid).apply { bindLiquids() }
+        val sp = v.findViewById<Spinner>(R.id.spinner_liquid).apply { bindLiquids(liquids, this@MainActivity) }
 
         AlertDialog.Builder(this)
             .setTitle("Эллиптическо-усечённая ёмкость (гор.)")
@@ -374,20 +372,27 @@ class MainActivity : AppCompatActivity() {
                 val st = etSt.text.toString().toDoubleOrNull()
                 val liq = liquids[sp.selectedItemPosition]
 
-                when {
-                    listOf(L,H,B,a,st).any { it==null||it<=0 } -> showError("Введите корректные значения")
-                    st!! > H!! -> showError("Шаг > H")
-                    B!! > a!! -> showError("B > a")
-                    else -> launchTable(
-                        "ellipDoubleTrunc",
-                        "length" to L!!,
-                        "height" to H,
-                        "width" to B,
-                        "axis" to a,
-                        "step" to st,
-                        "density" to liq.density
-                    )
+                val error: String? = when {
+                    listOf(L,H,B,a,st).any { it==null||it<=0 } -> "Введите корректные значения"
+                    st!! > H!! -> "Шаг > H"
+                    B!! > a!! -> "B > a"
+                    else -> validateStep(H, st)
                 }
+
+                if (error != null) {
+                    showError(error)
+                    return@setPositiveButton
+                }
+
+                launchTable(
+                    "ellipDoubleTrunc",
+                    "length" to L!!,
+                    "height" to H!!,
+                    "width" to B!!,
+                    "axis" to a!!,
+                    "step" to st!!,
+                    "density" to liq.density
+                )
             }
             .setNegativeButton("Отмена", null)
             .show()
@@ -402,7 +407,7 @@ class MainActivity : AppCompatActivity() {
         val etH2 = v.findViewById<EditText>(R.id.edit_text_height2)
         val etB = v.findViewById<EditText>(R.id.edit_text_width)
         val etSt = v.findViewById<EditText>(R.id.edit_text_step)
-        val sp = v.findViewById<Spinner>(R.id.spinner_liquid).apply { bindLiquids() }
+        val sp = v.findViewById<Spinner>(R.id.spinner_liquid).apply { bindLiquids(liquids, this@MainActivity) }
 
         AlertDialog.Builder(this)
             .setTitle("Прямоугольно-округлая ёмкость")
@@ -415,21 +420,28 @@ class MainActivity : AppCompatActivity() {
                 val st = etSt.text.toString().toDoubleOrNull()
                 val liq = liquids[sp.selectedItemPosition]
 
-                when {
-                    listOf(L,H1,H2,B,st).any { it==null||it<=0 } -> showError("Введите корректные значения")
-                    H1!! <= H2!! -> showError("H1 ≤ H2")
-                    B!! <= H1 - H2 -> showError("B ≤ H1 − H2")
-                    st!! > H1 -> showError("Шаг > H1")
-                    else -> launchTable(
-                        "roundedRect",
-                        "length" to L!!,
-                        "height1" to H1,
-                        "height2" to H2,
-                        "width" to B,
-                        "step" to st,
-                        "density" to liq.density
-                    )
+                val error: String? = when {
+                    listOf(L,H1,H2,B,st).any { it==null||it<=0 } -> "Введите корректные значения"
+                    H1!! <= H2!! -> "H1 ≤ H2"
+                    B!! <= H1 - H2 -> "B ≤ H1 − H2"
+                    st!! > H1 -> "Шаг > H1"
+                    else -> validateStep(H1, st)
                 }
+
+                if (error != null) {
+                    showError(error)
+                    return@setPositiveButton
+                }
+
+                launchTable(
+                    "roundedRect",
+                    "length" to L!!,
+                    "height1" to H1!!,
+                    "height2" to H2!!,
+                    "width" to B!!,
+                    "step" to st!!,
+                    "density" to liq.density
+                )
             }
             .setNegativeButton("Отмена", null)
             .show()
@@ -444,7 +456,7 @@ class MainActivity : AppCompatActivity() {
         val etH2 = v.findViewById<EditText>(R.id.edit_text_height2)
         val etB = v.findViewById<EditText>(R.id.edit_text_width)
         val etSt = v.findViewById<EditText>(R.id.edit_text_step)
-        val sp = v.findViewById<Spinner>(R.id.spinner_liquid).apply { bindLiquids() }
+        val sp = v.findViewById<Spinner>(R.id.spinner_liquid).apply { bindLiquids(liquids, this@MainActivity) }
 
         AlertDialog.Builder(this)
             .setTitle("Чемоданная ёмкость")
@@ -457,20 +469,27 @@ class MainActivity : AppCompatActivity() {
                 val st = etSt.text.toString().toDoubleOrNull()
                 val liq = liquids[sp.selectedItemPosition]
 
-                when {
-                    listOf(L,H1,H2,B,st).any { it==null||it<=0 } -> showError("Введите корректные значения")
-                    H1!! <= H2!! -> showError("H1 ≤ H2")
-                    st!! > H1 -> showError("Шаг > H1")
-                    else -> launchTable(
-                        "suitcase",
-                        "length" to L!!,
-                        "height1" to H1,
-                        "height2" to H2,
-                        "width" to B!!,
-                        "step" to st,
-                        "density" to liq.density
-                    )
+                val error: String? = when {
+                    listOf(L,H1,H2,B,st).any { it==null||it<=0 } -> "Введите корректные значения"
+                    H1!! <= H2!! -> "H1 ≤ H2"
+                    st!! > H1 -> "Шаг > H1"
+                    else -> validateStep(H1, st)
                 }
+
+                if (error != null) {
+                    showError(error)
+                    return@setPositiveButton
+                }
+
+                launchTable(
+                    "suitcase",
+                    "length" to L!!,
+                    "height1" to H1!!,
+                    "height2" to H2!!,
+                    "width" to B!!,
+                    "step" to st!!,
+                    "density" to liq.density
+                )
             }
             .setNegativeButton("Отмена", null)
             .show()
@@ -483,7 +502,7 @@ class MainActivity : AppCompatActivity() {
         val etH = v.findViewById<EditText>(R.id.edit_text_height)
         val etD = v.findViewById<EditText>(R.id.edit_text_diameter)
         val etSt = v.findViewById<EditText>(R.id.edit_text_step)
-        val sp = v.findViewById<Spinner>(R.id.spinner_liquid).apply { bindLiquids() }
+        val sp = v.findViewById<Spinner>(R.id.spinner_liquid).apply { bindLiquids(liquids, this@MainActivity) }
 
         AlertDialog.Builder(this)
             .setTitle("Цилиндрическая ёмкость (верт.)")
@@ -494,17 +513,24 @@ class MainActivity : AppCompatActivity() {
                 val st = etSt.text.toString().toDoubleOrNull()
                 val liq = liquids[sp.selectedItemPosition]
 
-                when {
-                    listOf(H,D,st).any { it==null||it<=0 } -> showError("Введите корректные значения")
-                    st!! > H!! -> showError("Шаг > H")
-                    else -> launchTable(
-                        "cylVert",
-                        "height"  to H,
-                        "diameter" to D!!,
-                        "step"    to st,
-                        "density" to liq.density
-                    )
+                val error: String? = when {
+                    listOf(H,D,st).any { it==null||it<=0 } -> "Введите корректные значения"
+                    st!! > H!! -> "Шаг > H"
+                    else -> validateStep(H, st)
                 }
+
+                if (error != null) {
+                    showError(error)
+                    return@setPositiveButton
+                }
+
+                launchTable(
+                    "cylVert",
+                    "height"  to H!!,
+                    "diameter" to D!!,
+                    "step" to st!!,
+                    "density" to liq.density
+                )
             }
             .setNegativeButton("Отмена", null)
             .show()
@@ -519,7 +545,7 @@ class MainActivity : AppCompatActivity() {
         val etD2 = v.findViewById<EditText>(R.id.edit_text_small_d)
         val etF = v.findViewById<EditText>(R.id.edit_text_frustum)
         val etSt = v.findViewById<EditText>(R.id.edit_text_step)
-        val sp = v.findViewById<Spinner>(R.id.spinner_liquid).apply { bindLiquids() }
+        val sp = v.findViewById<Spinner>(R.id.spinner_liquid).apply { bindLiquids(liquids, this@MainActivity) }
 
         AlertDialog.Builder(this)
             .setTitle("Верт. ёмкость и усеч. конусное дно")
@@ -532,21 +558,28 @@ class MainActivity : AppCompatActivity() {
                 val st = etSt.text.toString().toDoubleOrNull()
                 val liq = liquids[sp.selectedItemPosition]
 
-                when {
-                    listOf(H,D1,D2,f,st).any { it==null||it<=0 } -> showError("Введите корректные значения")
-                    D2!! >= D1!! -> showError("D2 ≥ D1")
-                    f!! >= H!! -> showError("f ≥ H")
-                    st!! > H -> showError("Шаг > H")
-                    else -> launchTable(
-                        "frustumBottomVert",
-                        "height" to H,
-                        "bigD" to D1,
-                        "smallD" to D2,
-                        "frustum" to f,
-                        "step" to st,
-                        "density" to liq.density
-                    )
+                val error: String? = when {
+                    listOf(H,D1,D2,f,st).any { it==null||it<=0 } -> "Введите корректные значения"
+                    D2!! >= D1!! -> "D2 ≥ D1"
+                    f!! >= H!! -> "f ≥ H"
+                    st!! > H -> "Шаг > H"
+                    else -> validateStep(H, st)
                 }
+
+                if (error != null) {
+                    showError(error)
+                    return@setPositiveButton
+                }
+
+                launchTable(
+                    "frustumBottomVert",
+                    "height" to H!!,
+                    "bigD" to D1!!,
+                    "smallD" to D2!!,
+                    "frustum" to f!!,
+                    "step" to st!!,
+                    "density" to liq.density
+                )
             }
             .setNegativeButton("Отмена", null)
             .show()
@@ -560,7 +593,7 @@ class MainActivity : AppCompatActivity() {
         val etD1 = v.findViewById<EditText>(R.id.edit_text_big_d)
         val etD2 = v.findViewById<EditText>(R.id.edit_text_small_d)
         val etSt = v.findViewById<EditText>(R.id.edit_text_step)
-        val sp = v.findViewById<Spinner>(R.id.spinner_liquid).apply { bindLiquids() }
+        val sp = v.findViewById<Spinner>(R.id.spinner_liquid).apply { bindLiquids(liquids, this@MainActivity) }
 
         AlertDialog.Builder(this)
             .setTitle("Винная ёмкость")
@@ -572,19 +605,26 @@ class MainActivity : AppCompatActivity() {
                 val st = etSt.text.toString().toDoubleOrNull()
                 val liq = liquids[sp.selectedItemPosition]
 
-                when {
-                    listOf(H,D1,D2,st).any { it==null||it<=0 } -> showError("Введите корректные значения")
-                    D2!! >= D1!! -> showError("D2 ≥ D1")
-                    st!! > H!! -> showError("Шаг > H")
-                    else -> launchTable(
-                        "wineBarrel",
-                        "height" to H,
-                        "bigD" to D1,
-                        "smallD" to D2,
-                        "step" to st,
-                        "density" to liq.density
-                    )
+                val error: String? = when {
+                    listOf(H,D1,D2,st).any { it==null||it<=0 } -> "Введите корректные значения"
+                    D2!! >= D1!! -> "D2 ≥ D1"
+                    st!! > H!! -> "Шаг > H"
+                    else -> validateStep(H, st)
                 }
+
+                if (error != null) {
+                    showError(error)
+                    return@setPositiveButton
+                }
+
+                launchTable(
+                    "wineBarrel",
+                    "height" to H!!,
+                    "bigD" to D1!!,
+                    "smallD" to D2!!,
+                    "step" to st!!,
+                    "density" to liq.density
+                )
             }
             .setNegativeButton("Отмена", null)
             .show()
@@ -603,7 +643,7 @@ class MainActivity : AppCompatActivity() {
         val etb2 = v.findViewById<EditText>(R.id.et_smallB)
         val etF = v.findViewById<EditText>(R.id.et_frustum)
         val etSt = v.findViewById<EditText>(R.id.et_step)
-        val sp = v.findViewById<Spinner>(R.id.spinner_liquid).apply { bindLiquids() }
+        val sp = v.findViewById<Spinner>(R.id.spinner_liquid).apply { bindLiquids(liquids, this@MainActivity) }
 
         AlertDialog.Builder(this)
             .setTitle("Верт. прямоугольная + пирамид. дно")
@@ -619,23 +659,30 @@ class MainActivity : AppCompatActivity() {
                 val st = etSt.d()
                 val liq = liquids[sp.selectedItemPosition]
 
-                when {
-                    listOf(H,A1,B1,a2,b2,f,st).any { it==null||it<=0 } -> showError("Введите корректные значения")
-                    a2!! >= A1!! || b2!! >= B1!! -> showError("a2,b2 ≥ A1,B1")
-                    f!! >= H!! -> showError("f ≥ H")
-                    st!! > H -> showError("Шаг > H")
-                    else -> launchTable(
-                        "rectFrustumVert",
-                        "height" to H,
-                        "bigA" to A1,
-                        "bigB" to B1,
-                        "smallA" to a2,
-                        "smallB" to b2,
-                        "frustum" to f,
-                        "step" to st,
-                        "density" to liq.density
-                    )
+                val error: String? = when {
+                    listOf(H,A1,B1,a2,b2,f,st).any { it==null||it<=0 } -> "Введите корректные значения"
+                    a2!! >= A1!! || b2!! >= B1!! -> "a2,b2 ≥ A1,B1"
+                    f!! >= H!! -> "f ≥ H"
+                    st!! > H -> "Шаг > H"
+                    else -> validateStep(H, st)
                 }
+
+                if (error != null) {
+                    showError(error)
+                    return@setPositiveButton
+                }
+
+                launchTable(
+                    "rectFrustumVert",
+                    "height" to H!!,
+                    "bigA" to A1!!,
+                    "bigB" to B1!!,
+                    "smallA" to a2!!,
+                    "smallB" to b2!!,
+                    "frustum" to f!!,
+                    "step" to st!!,
+                    "density" to liq.density
+                )
             }
             .setNegativeButton("Отмена", null)
             .show()
@@ -647,7 +694,7 @@ class MainActivity : AppCompatActivity() {
 
         val etD  = v.findViewById<EditText>(R.id.edit_text_diameter)
         val etSt = v.findViewById<EditText>(R.id.edit_text_step)
-        val sp = v.findViewById<Spinner>(R.id.spinner_liquid).apply { bindLiquids() }
+        val sp = v.findViewById<Spinner>(R.id.spinner_liquid).apply { bindLiquids(liquids, this@MainActivity) }
 
         AlertDialog.Builder(this)
             .setTitle("Сферическая ёмкость")
@@ -657,16 +704,24 @@ class MainActivity : AppCompatActivity() {
                 val st = etSt.text.toString().toDoubleOrNull()
                 val liq= liquids[sp.selectedItemPosition]
 
-                when {
-                    D==null||st==null||D<=0||st<=0 -> showError("Введите корректные значения")
-                    st > D -> showError("Шаг > D")
-                    else -> launchTable(
-                        "sphere",
-                        "diameter" to D,
-                        "step" to st,
-                        "density" to liq.density
-                    )
+                val error: String? = when {
+                    D == null || st == null || D <= 0 || st <= 0 -> "Введите корректные значения"
+                    st > D -> "Шаг > D"
+                    else -> validateStep(D, st)
                 }
+
+                if (error != null) {
+                    showError(error)
+                    return@setPositiveButton
+                }
+
+                launchTable(
+                    "sphere",
+                    "diameter" to D!!,
+                    "step" to st!!,
+                    "density" to liq.density
+                )
+
             }
             .setNegativeButton("Отмена", null)
             .show()
@@ -679,7 +734,7 @@ class MainActivity : AppCompatActivity() {
         val etD = v.findViewById<EditText>(R.id.edit_text_diameter)
         val etF = v.findViewById<EditText>(R.id.edit_text_cap_height)
         val etSt = v.findViewById<EditText>(R.id.edit_text_step)
-        val sp = v.findViewById<Spinner>(R.id.spinner_liquid).apply { bindLiquids() }
+        val sp = v.findViewById<Spinner>(R.id.spinner_liquid).apply { bindLiquids(liquids, this@MainActivity) }
 
         AlertDialog.Builder(this)
             .setTitle("Дуговое днище (верт.)")
@@ -690,18 +745,25 @@ class MainActivity : AppCompatActivity() {
                 val st = etSt.text.toString().toDoubleOrNull()
                 val liq= liquids[sp.selectedItemPosition]
 
-                when {
-                    D==null||f==null||st==null||D<=0||f<=0||st<=0 -> showError("Введите корректные значения")
-                    f > D / 2 -> showError("f > D / 2")
-                    st > D -> showError("Шаг > D")
-                    else -> launchTable(
-                        "singleArc",
-                        "diameter" to D,
-                        "capH" to f,
-                        "step" to st,
-                        "density" to liq.density
-                    )
+                val error: String? = when {
+                    D==null||f==null||st==null||D<=0||f<=0||st<=0 -> "Введите корректные значения"
+                    f > D / 2 -> "f > D / 2"
+                    st > D -> "Шаг > D"
+                    else -> validateStep(D, st)
                 }
+
+                if (error != null) {
+                    showError(error)
+                    return@setPositiveButton
+                }
+
+                launchTable(
+                    "singleArc",
+                    "diameter" to D!!,
+                    "capH" to f!!,
+                    "step" to st!!,
+                    "density" to liq.density
+                )
             }
             .setNegativeButton("Отмена", null)
             .show()
@@ -714,7 +776,7 @@ class MainActivity : AppCompatActivity() {
         val etD = v.findViewById<EditText>(R.id.et_diameter)
         val etF = v.findViewById<EditText>(R.id.et_cone_height)
         val etSt = v.findViewById<EditText>(R.id.et_step)
-        val sp = v.findViewById<Spinner>(R.id.spinner_liquid).apply { bindLiquids() }
+        val sp = v.findViewById<Spinner>(R.id.spinner_liquid).apply { bindLiquids(liquids, this@MainActivity) }
 
         AlertDialog.Builder(this)
             .setTitle("Коническое днище (отдельно)")
@@ -725,18 +787,25 @@ class MainActivity : AppCompatActivity() {
                 val st = etSt.text.toString().toDoubleOrNull()
                 val liq = liquids[sp.selectedItemPosition]
 
-                when {
-                    D==null||f==null||st==null||D<=0||f<=0||st<=0 -> showError("Введите корректные значения")
-                    f > D / 2 -> showError("f > D / 2")
-                    st > D -> showError("Шаг > D")
-                    else -> launchTable(
-                        "singleCone",
-                        "diameter" to D,
-                        "coneH" to f,
-                        "step" to st,
-                        "density" to liq.density
-                    )
+                val error: String? = when {
+                    D==null||f==null||st==null||D<=0||f<=0||st<=0 -> "Введите корректные значения"
+                    st > D -> "Шаг > D"
+                    f > D / 2 -> "f > D / 2"
+                    else -> validateStep(D, st)
                 }
+
+                if (error != null) {
+                    showError(error)
+                    return@setPositiveButton
+                }
+
+                launchTable(
+                    "singleCone",
+                    "diameter" to D!!,
+                    "coneH" to f!!,
+                    "step" to st!!,
+                    "density" to liq.density
+                )
             }
             .setNegativeButton("Отмена", null)
             .show()
@@ -747,7 +816,7 @@ class MainActivity : AppCompatActivity() {
         val etL = v.findViewById<EditText>(R.id.edit_text_length)
         val etD = v.findViewById<EditText>(R.id.edit_text_diameter)
         val etSt = v.findViewById<EditText>(R.id.edit_text_step)
-        val sp = v.findViewById<Spinner>(R.id.spinner_liquid).apply { bindLiquids() }
+        val sp = v.findViewById<Spinner>(R.id.spinner_liquid).apply { bindLiquids(liquids, this@MainActivity) }
 
         AlertDialog.Builder(this)
             .setTitle(title)
@@ -758,21 +827,25 @@ class MainActivity : AppCompatActivity() {
                 val st = etSt.text.toString().toDoubleOrNull()
                 val liq= liquids[sp.selectedItemPosition]
 
-                if (D==null||st==null||D<=0||st<=0) {
-                    showError("Введите корректные значения")
+                val error: String? = when {
+                    D == null || st == null || L<=0 || D<=0 || st<=0 -> "Введите корректные значения"
+                    st > D -> "Шаг > D"
+                    else -> validateStep(D, st)
                 }
-                else if (st > D) {
-                    showError("Шаг > D")
+
+                if (error != null) {
+                    showError(error)
+                    return@setPositiveButton
                 }
-                else {
-                    launchTable(
-                        shapeId,
-                        "length" to L,
-                        "diameter" to D,
-                        "step" to st,
-                        "density" to liq.density
-                    )
-                }
+
+                launchTable(
+                    shapeId,
+                    "length" to L,
+                    "diameter" to D!!,
+                    "step" to st!!,
+                    "density" to liq.density
+                )
+
             }
             .setNegativeButton("Отмена", null)
             .show()
@@ -784,7 +857,7 @@ class MainActivity : AppCompatActivity() {
         val etD = v.findViewById<EditText>(R.id.edit_text_diameter)
         val etF = v.findViewById<EditText>(R.id.edit_text_head_height)
         val etSt = v.findViewById<EditText>(R.id.edit_text_step)
-        val sp = v.findViewById<Spinner>(R.id.spinner_liquid).apply { bindLiquids() }
+        val sp = v.findViewById<Spinner>(R.id.spinner_liquid).apply { bindLiquids(liquids, this@MainActivity) }
 
         AlertDialog.Builder(this)
             .setTitle(title)
@@ -796,20 +869,29 @@ class MainActivity : AppCompatActivity() {
                 val st = etSt.text.toString().toDoubleOrNull()
                 val liq = liquids[sp.selectedItemPosition]
 
-                when {
-                    listOf(L,D,f,st).any { it==null||it<=0 } -> showError("Введите корректные значения")
-                    st!! > D!! -> showError("Шаг > D")
-                    shapeId=="coneEndsCyl" && f!! > D / 2 -> showError("Высота конуса > D/2")
-                    shapeId=="arcEndsCyl" && f!! > D / 2 -> showError("Высота дуги > D/2")
-                    else -> launchTable(
-                        shapeId,
-                        "length" to L!!,
-                        "diameter" to D,
-                        extra to f!!,
-                        "step" to st,
-                        "density" to liq.density
-                    )
+
+                val error: String? = when {
+                    listOf(L,D,f,st).any { it==null||it<=0 } -> "Введите корректные значения"
+                    st!! > D!! -> "Шаг > D"
+                    shapeId=="coneEndsCyl" && f!! > D / 2 -> "Высота конуса > D/2"
+                    shapeId=="arcEndsCyl" && f!! > D / 2 -> "Высота дуги > D/2"
+                    else -> validateStep(D, st)
                 }
+
+                if (error != null) {
+                    showError(error)
+                    return@setPositiveButton
+                }
+
+                launchTable(
+                    shapeId,
+                    "length" to L!!,
+                    "diameter" to D!!,
+                    extra to f!!,
+                    "step" to st!!,
+                    "density" to liq.density
+                )
+
             }
             .setNegativeButton("Отмена", null)
             .show()
