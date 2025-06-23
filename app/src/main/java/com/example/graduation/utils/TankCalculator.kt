@@ -692,9 +692,9 @@ object TankCalculator {
         density: Double
     ): List<TableRow> {
 
-        val R  = diameterMm / 2.0 / 1000.0
-        val f  = capHeightMm / 1000.0
-        val H  = 2 * R
+        val R = diameterMm / 2.0 / 1000.0
+        val f = capHeightMm / 1000.0
+        val H = 2 * R
         val stepM = stepMm / 1000.0
         val planeX = -R + f
 
